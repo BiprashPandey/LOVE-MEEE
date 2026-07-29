@@ -1,77 +1,31 @@
-# Base44 Project
+# LOVE MEEE - Personal Productivity & Motivation Mobile App
 
-Use this repository to run and edit the app locally, then publish changes back through Base44.
+LOVE MEEE is a cross-platform productivity and motivation web/mobile application built with React, Vite, TailwindCSS, Framer Motion, and Web Audio API.
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+## Features
 
-## Prerequisites
+- **Goal & Onboarding Setup:** Personal primary goal, category selection, monitored distracting apps, and sleep/wake schedule setup.
+- **Task Management (CRUD):** Add, edit, prioritize (Low, Med, High), toggle completion, and delete tasks with local persistence.
+- **Pomodoro Timer & Stopwatch:** Focus timer cycles with custom work/break intervals, Web Audio synthesized completion chimes, haptic vibration alerts (`navigator.vibrate`), and live tab title countdown.
+- **Calendar & Streak Tracking:** Dynamic streak calculation and color-coded productivity log thresholds (High, Medium, Low).
+- **Distraction Shield & Pattern Interrupt:** Simulated distraction app usage monitor with automatic intervention alerts and motivational nudges.
+- **Local Notifications:** Browser Web Notifications & custom toast alerts for sleep/wake reminders and motivational quotes.
 
-1. Clone the repository using the project's Git URL.
-2. Navigate to the project directory.
-3. Install dependencies: `npm install`.
-4. Install the Base44 CLI: `npm install -g base44@latest`.
+## Getting Started
 
-See the [Base44 CLI docs](https://docs.base44.com/developers/references/cli/get-started/overview) if you want to run Base44 commands directly.
-
-## Run Locally
-
-Run the full local development environment from the project root:
-
+### Installation
 ```bash
-base44 dev
+npm install
 ```
 
-`base44 dev` starts the local Base44 development backend and, when this app is configured for it, also starts the frontend dev server for you. Use the frontend URL printed by the command.
-
-For example, when the Base44 project config includes a `serveCommand`, `base44 dev` can launch the frontend too:
-
-```json5
-{
-  "site": {
-    "serveCommand": "npm run dev"
-  }
-}
-```
-
-In a Base44 project this lives in `base44/config.jsonc`.
-
-## Run Only The Frontend
-
-If you only want to work on the frontend against the hosted Base44 backend, run:
-
+### Run Development Server
 ```bash
 npm run dev
 ```
 
-Open the local URL printed by Vite.
+The app will start at `http://localhost:5173`. Access from your phone or local network using the network IP provided in the terminal console.
 
-## Use The Hosted Backend
-
-For frontend-only development, create or update `.env.local` in the project root:
-
+### Production Build
 ```bash
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=https://your-app.base44.app
+npm run build
 ```
-
-`VITE_BASE44_APP_ID` identifies the Base44 app.
-
-`VITE_BASE44_APP_BASE_URL` tells the Base44 Vite plugin where to send local `/api` requests. Point it at your deployed Base44 app URL when you want the local frontend to use the hosted backend.
-
-When you use `base44 dev`, the command injects the local Base44 values for you, so `.env.local` is mainly needed for frontend-only workflows.
-
-## Publish Your Changes
-
-After pushing your changes to git, open the Base44 dashboard and publish the app:
-
-```bash
-base44 dashboard open
-```
-
-## Docs & Support
-
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Base44 CLI command reference: [https://docs.base44.com/developers/references/cli/commands/introduction](https://docs.base44.com/developers/references/cli/commands/introduction)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)

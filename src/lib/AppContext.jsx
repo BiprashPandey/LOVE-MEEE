@@ -3,6 +3,7 @@ import { storageClient } from '@/api/storageClient';
 import { computeStreak, getLongestStreak, getTodayStr, computeLevel } from './dayLog';
 import { NotificationService, playCompletionChime, triggerHapticFeedback } from './NotificationService';
 import { toast } from 'sonner';
+import { DEFAULT_REELS } from './defaultReels';
 
 const AppContext = createContext();
 
@@ -13,6 +14,7 @@ export const AppProvider = ({ children }) => {
   const [dayLogs, setDayLogs] = useState([]);
   const [notes, setNotes] = useState([]);
   const [reels, setReels] = useState([]);
+  const [reelRegistry, setReelRegistry] = useState({}); // url → {filename, localUrl}
   const [loading, setLoading] = useState(true);
 
   const loadAllData = useCallback(async () => {
@@ -31,7 +33,27 @@ export const AppProvider = ({ children }) => {
       setSessions(allSessions || []);
       setDayLogs(logs || []);
       setNotes(allNotes || []);
-      setReels(allReels || []);
+
+      // ── First-run: seed default reels if pool is empty ──────────────────
+      let finalReels = allReels || [];
+      if (!finalReels.length) {
+        const seeded = [];
+        for (const r of DEFAULT_REELS) {
+          const created = await storageClient.entities.Reel.create({
+            url: r.url,
+            title: r.title,
+            author: r.author || 'Instagram',
+            priority: r.priority || false,
+          });
+          seeded.push(created);
+        }
+        finalReels = seeded;
+        toast.success('17 motivation reels added to your pool! Downloading… \uD83C\uDFAC');
+      }
+      setReels(finalReels);
+
+      // Auto-sync reels to the local download server (with priority flags)
+      syncReelsToServer(finalReels);
     } catch (e) {
       console.error('Failed to load local data:', e);
     } finally {
@@ -39,17 +61,78 @@ export const AppProvider = ({ children }) => {
     }
   }, []);
 
+  // Fetch the local video registry from the download server
+  const fetchReelRegistry = useCallback(async () => {
+    try {
+      const res = await fetch('http://localhost:3001/registry', { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        const reg = await res.json();
+        setReelRegistry(reg);
+      }
+    } catch {
+      // Download server not running — graceful no-op
+    }
+  }, []);
+
+  // Tell download server which reels to download with priority support
+  const syncReelsToServer = useCallback(async (reelList) => {
+    if (!reelList?.length) return;
+    try {
+      // Priority reel (first one marked priority:true) → send first so it queues at front
+      const priorityReels = reelList.filter(r => r.priority);
+      const normalReels   = reelList.filter(r => !r.priority);
+
+      // Pick 2 random reels from normal pool to download early alongside the priority one
+      const shuffled = [...normalReels].sort(() => Math.random() - 0.5);
+      const earlyBatch  = shuffled.slice(0, 2);
+      const laterBatch  = shuffled.slice(2);
+
+      // Send priority + 2 early-batch immediately
+      const firstSync = [...priorityReels, ...earlyBatch];
+      if (firstSync.length) {
+        await fetch('http://localhost:3001/sync-reels', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reels: firstSync.map(r => ({ url: r.url, title: r.title, priority: !!r.priority })),
+          }),
+          signal: AbortSignal.timeout(3000),
+        });
+      }
+
+      // Queue the rest after a brief gap so priority downloads first
+      if (laterBatch.length) {
+        setTimeout(async () => {
+          try {
+            await fetch('http://localhost:3001/sync-reels', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reels: laterBatch.map(r => ({ url: r.url, title: r.title })) }),
+            });
+          } catch {}
+        }, 5000);
+      }
+
+      setTimeout(fetchReelRegistry, 2000);
+    } catch {
+      // Download server not running — graceful no-op
+    }
+  }, [fetchReelRegistry]);
+
   useEffect(() => {
     loadAllData();
+    fetchReelRegistry();
 
-    const handleStorageChange = () => {
-      loadAllData();
-    };
+    const handleStorageChange = () => { loadAllData(); };
     window.addEventListener('love_meee_storage_change', handleStorageChange);
-    return () => {
-      window.removeEventListener('love_meee_storage_change', handleStorageChange);
-    };
-  }, [loadAllData]);
+    return () => { window.removeEventListener('love_meee_storage_change', handleStorageChange); };
+  }, [loadAllData, fetchReelRegistry]);
+
+  // Re-fetch registry periodically so the UI updates as downloads complete
+  useEffect(() => {
+    const interval = setInterval(fetchReelRegistry, 8000);
+    return () => clearInterval(interval);
+  }, [fetchReelRegistry]);
 
   useEffect(() => {
     NotificationService.requestPermission();
@@ -231,7 +314,9 @@ export const AppProvider = ({ children }) => {
         title: title.trim(),
       });
       setReels(prev => [newReel, ...prev]);
-      toast.success('Reel added to your pool! 🎬');
+      toast.success('Reel added! Downloading in background… 🎬');
+      // Kick off immediate background download
+      syncReelsToServer([{ url: url.trim(), title: title.trim() }]);
       return newReel;
     } catch (e) {
       toast.error('Failed to add reel');
@@ -261,6 +346,7 @@ export const AppProvider = ({ children }) => {
       dayLogs,
       notes,
       reels,
+      reelRegistry,
       loading,
       streak,
       longestStreak,
@@ -276,6 +362,7 @@ export const AppProvider = ({ children }) => {
       addReel,
       deleteReel,
       refreshData: loadAllData,
+      refreshRegistry: fetchReelRegistry,
     }}>
       {children}
     </AppContext.Provider>

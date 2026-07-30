@@ -14,19 +14,9 @@ const STORAGE_KEYS = {
   USER: 'love_meee_user',
 };
 
-const DEFAULT_REELS = [
-  { id: 'reel_1', url: 'https://www.instagram.com/reel/C3x9w4PL_Y7/', title: 'Never Give Up Motivation', author: 'Motivation Hub' },
-  { id: 'reel_2', url: 'https://www.instagram.com/reel/C8XYZ123456/', title: 'Daily Focus & Discipline', author: 'Mindset Daily' },
-  { id: 'reel_3', url: 'https://www.instagram.com/reel/C5ABC987654/', title: 'Build Your Legacy Today', author: 'Champion Mind' },
-];
-
 const getStorage = (key, defaultVal = []) => {
   try {
     const item = localStorage.getItem(key);
-    if (!item && key === STORAGE_KEYS.REELS) {
-      localStorage.setItem(key, JSON.stringify(DEFAULT_REELS));
-      return DEFAULT_REELS;
-    }
     return item ? JSON.parse(item) : defaultVal;
   } catch (e) {
     console.error(`Error reading ${key} from storage:`, e);
@@ -124,7 +114,7 @@ export const storageClient = {
     FocusSession: createEntityStore(STORAGE_KEYS.SESSIONS),
     DayLog: createEntityStore(STORAGE_KEYS.DAY_LOGS),
     Note: createEntityStore(STORAGE_KEYS.NOTES),
-    Reel: createEntityStore(STORAGE_KEYS.REELS, DEFAULT_REELS),
+    Reel: createEntityStore(STORAGE_KEYS.REELS),
   },
   getUser: () => getStorage(STORAGE_KEYS.USER, { id: 'local_user', name: 'Champion', email: 'champion@lovemeee.app' }),
   setUser: (user) => setStorage(STORAGE_KEYS.USER, user),

@@ -13,7 +13,8 @@ const REEL_IMAGES = [
   'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=80',
 ];
 
-const DOWNLOAD_SERVER = 'http://localhost:3001';
+// Dynamic server URL — works on both localhost and phone WiFi (http://192.168.x.x)
+const DOWNLOAD_SERVER = `${window.location.protocol}//${window.location.hostname}:3001`;
 
 // ── Inline video overlay plays on the card itself ─────────────────────────
 function VideoOverlay({ src, title, originalUrl, author, onClose }) {
@@ -35,20 +36,14 @@ function VideoOverlay({ src, title, originalUrl, author, onClose }) {
           style={{ maxHeight: 'calc(100% - 48px)' }}
         />
 
-        {/* Attribution bar */}
+        {/* Attribution bar — shows credit only, no external link */}
         <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-950 border-t border-white/10">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-[10px] text-white/40 font-medium flex-shrink-0">Credit:</span>
-            <a
-              href={originalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[11px] font-semibold text-rose-400 hover:text-rose-300 truncate max-w-[160px] transition-colors"
-            >
-              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+            <span className="text-[11px] font-semibold text-rose-400 truncate max-w-[200px]">
               {author || 'Instagram'}
-              <span className="text-white/30 ml-1 truncate">· {title}</span>
-            </a>
+              <span className="text-white/30 ml-1">· {title}</span>
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -90,38 +85,72 @@ function StatusBadge({ status }) {
 
 export default function MotivationalReel() {
   const { reels, addReel, deleteReel, reelRegistry, refreshRegistry } = useApp();
-  const [liked, setLiked] = useState(false);
+  // Liked reels stored in localStorage for weighted random selection
+  const [likedUrls, setLikedUrls] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('love_meee_liked_reels') || '[]'); }
+    catch { return []; }
+  });
   const [activeReel, setActiveReel] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showManagePool, setShowManagePool] = useState(false);
   const [newUrl, setNewUrl] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [serverStatus, setServerStatus] = useState(null);
+  // Auto-play triggered by notification click
+  const [pendingAutoplay, setPendingAutoplay] = useState(() => {
+    const flag = sessionStorage.getItem('love_meee_autoplay_reel');
+    if (flag) sessionStorage.removeItem('love_meee_autoplay_reel');
+    return !!flag;
+  });
+
+  const isLiked = activeReel ? likedUrls.includes(activeReel.url) : false;
+
+  const toggleLike = () => {
+    if (!activeReel) return;
+    setLikedUrls(prev => {
+      const next = prev.includes(activeReel.url)
+        ? prev.filter(u => u !== activeReel.url)
+        : [...prev, activeReel.url];
+      localStorage.setItem('love_meee_liked_reels', JSON.stringify(next));
+      return next;
+    });
+  };
 
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
   const img = REEL_IMAGES[dayOfYear % REEL_IMAGES.length];
   const quote = getDailyQuote();
 
-  // Pick active reel: priority (first) reel shown on home if locally saved; else random
+  // Reel selection:
+  //  - First open (no sessionStorage key) → show priority/featured reel
+  //  - Every refresh → pick a random reel
+  //  - Once picked, don't change when registry polls every 8s (use a ref to track if picked)
+  const [reelPicked, setReelPicked] = useState(false);
+
   useEffect(() => {
-    if (!reels?.length) return;
+    if (!reels?.length || reelPicked) return; // don't re-pick when registry updates
 
-    // Prefer the priority reel if it's already downloaded
-    const priorityReel = reels.find(r => r.priority || r.url === DEFAULT_REELS[0]?.url);
-    const priorityEntry = priorityReel ? reelRegistry?.[priorityReel.url] : null;
+    const SESSION_KEY = 'love_meee_session_started';
+    const isFirstOpen = !sessionStorage.getItem(SESSION_KEY);
 
-    if (priorityReel && priorityEntry?.filename) {
+    if (isFirstOpen) {
+      // First open this session → show priority reel (or first reel)
+      sessionStorage.setItem(SESSION_KEY, '1');
+      const priorityReel = reels.find(r => r.priority || r.url === DEFAULT_REELS[0]?.url) || reels[0];
       setActiveReel(priorityReel);
     } else {
-      // Fall back to a random locally-saved reel, or any reel
+      // Refreshed → weighted random: liked reels have 3x chance
       const localReels = reels.filter(r => reelRegistry?.[r.url]?.filename);
-      if (localReels.length) {
-        setActiveReel(localReels[Math.floor(Math.random() * localReels.length)]);
-      } else {
-        setActiveReel(reels[0]);
-      }
+      const pool = localReels.length ? localReels : reels;
+      const likedSet = (() => { try { return JSON.parse(localStorage.getItem('love_meee_liked_reels') || '[]'); } catch { return []; } })();
+      // Build weighted pool: liked reels appear 3 times, others once
+      const weighted = pool.flatMap(r => likedSet.includes(r.url) ? [r, r, r] : [r]);
+      setActiveReel(weighted[Math.floor(Math.random() * weighted.length)]);
     }
-  }, [reels, reelRegistry]);
+
+    setReelPicked(true);
+  }, [reels]); // intentionally only depends on reels, not reelRegistry
+
+
 
   // Poll server status every 5s to update badges
   useEffect(() => {
@@ -145,10 +174,28 @@ export default function MotivationalReel() {
 
   const activeEntry  = activeReel ? reelRegistry?.[activeReel.url] : null;
   const activeStatus = activeReel ? getReelStatus(activeReel.url) : 'pending';
-  // Serve video from Vite's public/ folder
+  // Serve video from Vite's public/ folder — uses same host as page (works on phone WiFi)
   const videoSrc = activeEntry?.filename
-    ? `http://localhost:5173/videos/${activeEntry.filename}`
+    ? `${window.location.origin}/videos/${activeEntry.filename}`
     : null;
+
+  // Auto-play when pendingAutoplay is set and video is ready
+  useEffect(() => {
+    if (pendingAutoplay && videoSrc) {
+      setPendingAutoplay(false);
+      setIsPlaying(true);
+    }
+  }, [pendingAutoplay, videoSrc]);
+
+  // Listen for notification-triggered play event
+  useEffect(() => {
+    const handler = () => {
+      if (videoSrc) setIsPlaying(true);
+      else setPendingAutoplay(true);
+    };
+    window.addEventListener('love-meee-play-reel', handler);
+    return () => window.removeEventListener('love-meee-play-reel', handler);
+  }, [videoSrc]);
 
   // Enrich reel with author/originalUrl info from DEFAULT_REELS if not stored
   function enrichReel(reel) {
@@ -210,10 +257,10 @@ export default function MotivationalReel() {
               <HardDrive className="h-3 w-3" /> {reels.length}
             </button>
             <button
-              onClick={() => setLiked(!liked)}
+              onClick={toggleLike}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform active:scale-90"
             >
-              <Heart className={`h-4 w-4 ${liked ? 'fill-rose-500 text-rose-500' : 'text-white'}`} />
+              <Heart className={`h-4 w-4 ${isLiked ? 'fill-rose-500 text-rose-500' : 'text-white'}`} />
             </button>
           </div>
         </div>
@@ -246,19 +293,6 @@ export default function MotivationalReel() {
                 : 'Open pool to add reels'
               }
             </span>
-
-            {/* Attribution link below play button when reel is known */}
-            {activeReel && (
-              <a
-                href={activeReel.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={e => e.stopPropagation()}
-                className="mt-2 flex items-center gap-1 text-[10px] text-white/40 hover:text-white/70 transition-colors"
-              >
-                <ExternalLink className="h-2.5 w-2.5" /> View original on Instagram
-              </a>
-            )}
           </div>
         )}
 
@@ -315,7 +349,7 @@ export default function MotivationalReel() {
                 const status = getReelStatus(r.url);
                 const def = DEFAULT_REELS.find(d => d.url === r.url);
                 const entry = reelRegistry?.[r.url];
-                const localSrc = entry?.filename ? `http://localhost:5173/videos/${entry.filename}` : null;
+                const localSrc = entry?.filename ? `${window.location.origin}/videos/${entry.filename}` : null;
 
                 return (
                   <div key={r.id} className="rounded-xl border border-border bg-card p-3 text-xs space-y-1.5">

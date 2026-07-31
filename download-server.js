@@ -160,17 +160,26 @@ function downloadVideo(url, title) {
 }
 
 // ── Priority download queue ────────────────────────────────────────────────
-// Items: { url, title, priority }  priority:true → prepend to queue
 const downloadQueue = [];
 let isProcessingQueue = false;
+const failedAttempts = new Map(); // url -> failure count (max 3)
 
 function enqueue(items) {
-  const priorityItems = items.filter(i => i.priority);
-  const normalItems   = items.filter(i => !i.priority);
-  // Priority items go to the FRONT
-  downloadQueue.unshift(...priorityItems);
-  downloadQueue.push(...normalItems);
+  for (const item of items) {
+    const { url, title, priority } = item;
+    // Skip if permanently failed
+    if ((failedAttempts.get(url) || 0) >= 3) continue;
+    // Skip if already in the queue
+    if (downloadQueue.some(q => q.url === url)) continue;
+    // Skip if already in the registry and file exists
+    const reg = loadRegistry();
+    if (reg[url]?.filename && existsSync(join(VIDEOS_DIR, reg[url].filename))) continue;
+
+    if (priority) downloadQueue.unshift({ url, title, priority });
+    else downloadQueue.push({ url, title });
+  }
 }
+
 
 async function processQueue() {
   if (isProcessingQueue || !downloadQueue.length) return;
@@ -179,6 +188,12 @@ async function processQueue() {
   while (downloadQueue.length) {
     const item = downloadQueue.shift();
     const { url, title } = item;
+
+    // Skip permanently-failed URLs
+    if ((failedAttempts.get(url) || 0) >= 3) {
+      console.log(`[skip] Max retries reached: ${title || url}`);
+      continue;
+    }
 
     const reg = loadRegistry();
     if (reg[url]?.filename && existsSync(join(VIDEOS_DIR, reg[url].filename))) {
@@ -197,8 +212,12 @@ async function processQueue() {
         downloadedAt: new Date().toISOString(),
       };
       saveRegistry(updated);
+      // Reset failure count on success
+      failedAttempts.delete(url);
     } catch (e) {
-      console.error(`[queue error] ${url}:`, e.message);
+      const attempts = (failedAttempts.get(url) || 0) + 1;
+      failedAttempts.set(url, attempts);
+      console.error(`[queue error ${attempts}/3] ${url}:`, e.message.split('\n')[0]);
     }
 
     await new Promise(r => setTimeout(r, 1500));
@@ -298,8 +317,8 @@ app.delete('/videos/:filename', (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── Start ──────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+// ── Start (bind 0.0.0.0 so phone on same WiFi can reach it) ───────────────
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🎬  LOVE MEEE Download Server — http://localhost:${PORT}`);
   console.log(`    yt-dlp  : ${YT_DLP ? `✓ ${YT_DLP}` : '✗ NOT FOUND — pip install yt-dlp'}`);
   console.log(`    cookies : ${COOKIE_BROWSER ? `✓ ${COOKIE_BROWSER}` : '⚠ no browser found — public reels only'}`);

@@ -1,48 +1,133 @@
-export const MOTIVATIONAL_QUOTES = [
-  { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
-  { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" },
-  { text: "Discipline is the bridge between goals and accomplishment.", author: "Jim Rohn" },
-  { text: "Success is the sum of small efforts repeated day in and day out.", author: "Robert Collier" },
-  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-  { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
-  { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
-  { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
-  { text: "It always seems impossible until it's done.", author: "Nelson Mandela" },
-  { text: "Quality is not an act, it is a habit.", author: "Aristotle" },
-  { text: "Your only limit is you.", author: "Unknown" },
-  { text: "Push yourself, because no one else is going to do it for you.", author: "Unknown" },
-  { text: "Great things never come from comfort zones.", author: "Unknown" },
-  { text: "Wake up with determination. Go to bed with satisfaction.", author: "Unknown" },
-  { text: "The harder you work for something, the greater you'll feel when you achieve it.", author: "Unknown" },
-  { text: "Dream it. Wish it. Do it.", author: "Unknown" },
-  { text: "Little things make big days.", author: "Unknown" },
-  { text: "It's going to be hard, but hard does not mean impossible.", author: "Unknown" },
-  { text: "Don't wait for opportunity. Create it.", author: "Unknown" },
-  { text: "Sometimes we're tested not to show our weaknesses, but to discover our strengths.", author: "Unknown" },
-  { text: "The key to success is to focus on goals, not obstacles.", author: "Unknown" },
-  { text: "Wake up, be kind, do good, repeat.", author: "Unknown" },
-  { text: "Progress, not perfection.", author: "Unknown" },
-  { text: "One day or day one. You decide.", author: "Unknown" },
-  { text: "Stop wishing. Start doing.", author: "Unknown" },
+/**
+ * LOVE MEEE — Motivational Quotes Library
+ * Key action words are ALL CAPS for maximum impact.
+ */
+
+export const QUOTES = [
+  { text: "The best way to get started is to QUIT TALKING and BEGIN DOING.", author: "Walt Disney" },
+  { text: "The pessimist complains about the wind; the optimist expects it to change; the realist ADJUSTS THE SAILS.", author: "William Arthur Ward" },
+  { text: "Don't let YESTERDAY take up too much of TODAY.", author: "Will Rogers" },
+  { text: "You learn more from FAILURE than from success. DON'T LET IT STOP YOU. Failure builds CHARACTER.", author: "Unknown" },
+  { text: "It's not whether you get knocked down — it's whether you GET UP.", author: "Vince Lombardi" },
+  { text: "If you are working on something you really care about, you don't have to be pushed. THE VISION PULLS YOU.", author: "Steve Jobs" },
+  { text: "People who are crazy enough to think they can CHANGE THE WORLD usually do.", author: "Rob Siltanen" },
+  { text: "Failure will NEVER OVERTAKE ME if my DETERMINATION to succeed is strong enough.", author: "Og Mandino" },
+  { text: "We may encounter many defeats but we MUST NOT BE DEFEATED.", author: "Maya Angelou" },
+  { text: "Knowing is not enough; we must APPLY. Wishing is not enough; we must DO.", author: "Johann Wolfgang von Goethe" },
+  { text: "Imagine your life is PERFECT in every respect — what would it look like?", author: "Brian Tracy" },
+  { text: "We generate fears while we sit. We OVERCOME THEM BY ACTION.", author: "Dr. Henry Link" },
+  { text: "Whether you think you CAN or you think you CAN'T — you're right.", author: "Henry Ford" },
+  { text: "Life is either a DARING ADVENTURE or nothing at all.", author: "Helen Keller" },
+  { text: "The man who has CONFIDENCE IN HIMSELF gains the confidence of others.", author: "Hasidic Proverb" },
+  { text: "The only limit to our realization of tomorrow will be our DOUBTS OF TODAY.", author: "Franklin D. Roosevelt" },
+  { text: "Creativity is INTELLIGENCE having fun.", author: "Albert Einstein" },
+  { text: "What you lack in talent can be made up with DESIRE, HUSTLE, and giving 110% ALL THE TIME.", author: "Don Zimmer" },
+  { text: "DO WHAT YOU CAN with all you have, wherever you are.", author: "Theodore Roosevelt" },
+  { text: "To handle yourself, use your head; to handle others, USE YOUR HEART.", author: "Eleanor Roosevelt" },
+  { text: "Drop an idea because it is too SLOW, not because it is too bold.", author: "Robert H. Schuller" },
+  { text: "You can either experience the pain of DISCIPLINE or the pain of REGRET.", author: "Jim Rohn" },
+  { text: "Fall seven times. STAND UP EIGHT.", author: "Japanese Proverb" },
+  { text: "The airplane takes off AGAINST THE WIND, not with it. Remember that when everything seems against you.", author: "Henry Ford" },
+  { text: "It's not the years in your life that count. It's the LIFE IN YOUR YEARS.", author: "Abraham Lincoln" },
+  { text: "CHANGE YOUR THOUGHTS and you change your world.", author: "Norman Vincent Peale" },
+  { text: "Either RUN THE DAY, or the day runs you.", author: "Jim Rohn" },
+  { text: "I would rather DIE OF PASSION than of boredom.", author: "Vincent van Gogh" },
+  { text: "START WHERE YOU ARE. Use what you have. DO WHAT YOU CAN.", author: "Arthur Ashe" },
+  { text: "GOAL SETTING is the secret to a compelling future.", author: "Tony Robbins" },
+  { text: "Most people are busy GETTING READY to live instead of actually living.", author: "Jonathan Swift" },
+  { text: "A person who NEVER MADE A MISTAKE never tried anything new.", author: "Albert Einstein" },
+  { text: "The person who says it cannot be done should NOT INTERRUPT the person who IS DOING IT.", author: "Chinese Proverb" },
+  { text: "EVERYTHING YOU'VE EVER WANTED is on the other side of fear.", author: "George Addair" },
+  { text: "BELIEVE YOU CAN and you're halfway there.", author: "Theodore Roosevelt" },
+  { text: "When you reach the end of your rope, TIE A KNOT IN IT and hang on.", author: "Franklin D. Roosevelt" },
+  { text: "Don't watch the clock; do what it does. KEEP GOING.", author: "Sam Levenson" },
+  { text: "A creative person is motivated by the DESIRE TO ACHIEVE, not the desire to beat others.", author: "Ayn Rand" },
+  { text: "A leader KNOWS THE WAY, GOES THE WAY, and SHOWS THE WAY.", author: "John C. Maxwell" },
+  { text: "If you want to lift yourself up, LIFT UP SOMEONE ELSE.", author: "Booker T. Washington" },
+  { text: "Set your goals HIGH, and DON'T STOP till you get there.", author: "Bo Jackson" },
+  { text: "Do not wait to strike till the iron is hot — MAKE IT HOT by striking.", author: "William Butler Yeats" },
+  { text: "GREAT MINDS discuss ideas; average minds discuss events; small minds discuss people.", author: "Eleanor Roosevelt" },
+  { text: "I have not failed. I've just found 10,000 WAYS THAT WON'T WORK.", author: "Thomas A. Edison" },
+  { text: "If you don't BUILD YOUR DREAM, someone else will hire you to help them build theirs.", author: "Dhirubhai Ambani" },
+  { text: "ACTION is the foundational key to ALL SUCCESS.", author: "Pablo Picasso" },
+  { text: "Success usually comes to those who are TOO BUSY to be looking for it.", author: "Henry David Thoreau" },
+  { text: "COURAGE is grace under pressure.", author: "Ernest Hemingway" },
+  { text: "If you are not willing to RISK THE USUAL, you will have to settle for the ordinary.", author: "Jim Rohn" },
+  { text: "Education is the most POWERFUL WEAPON you can use to change the world.", author: "Nelson Mandela" },
+  { text: "Too many of us are not living our DREAMS because we are living our FEARS.", author: "Les Brown" },
+  { text: "Challenges are what make life interesting — OVERCOMING THEM is what makes life meaningful.", author: "Joshua J. Marine" },
+  { text: "If you want to achieve GREATNESS, stop asking for permission.", author: "Anonymous" },
+  { text: "Things do not happen. THINGS ARE MADE TO HAPPEN.", author: "John F. Kennedy" },
+  { text: "True freedom is impossible without a mind made free by DISCIPLINE.", author: "Mortimer J. Adler" },
+  { text: "I NEVER GAVE OR TOOK ANY EXCUSE. That is the secret of my success.", author: "Florence Nightingale" },
+  { text: "You don't have to be great to START, but you have to START to be GREAT.", author: "Zig Ziglar" },
+  { text: "There is only one way to avoid criticism: DO NOTHING, SAY NOTHING, BE NOTHING.", author: "Aristotle" },
+  { text: "ASK and it will be given; SEEK and you will find; KNOCK and the door will open.", author: "Jesus" },
+  { text: "The secret of getting ahead is GETTING STARTED.", author: "Mark Twain" },
+  { text: "The HARDER I WORK, the more luck I have.", author: "Thomas Jefferson" },
+  { text: "START SMALL. THINK BIG. ACT NOW.", author: "Unknown" },
+  { text: "DON'T WAIT. The time will never be just right.", author: "Napoleon Hill" },
+  { text: "Perfection is not attainable — but if we CHASE PERFECTION we can catch EXCELLENCE.", author: "Vince Lombardi" },
+  { text: "Write it on your heart: EVERY DAY IS THE BEST DAY of the year.", author: "Ralph Waldo Emerson" },
+  { text: "ACT AS IF what you do makes a difference. IT DOES.", author: "William James" },
+  { text: "Success is walking from FAILURE TO FAILURE with no loss of enthusiasm.", author: "Winston Churchill" },
+  { text: "NOTHING CAN BE DONE without hope and confidence. Optimism is the faith that leads to achievement.", author: "Helen Keller" },
+  { text: "Life shrinks or expands in proportion to one's COURAGE.", author: "Anaïs Nin" },
+  { text: "With the new day comes NEW STRENGTH and new thoughts.", author: "Eleanor Roosevelt" },
+  { text: "Keep your face to the SUNSHINE and you cannot see a shadow.", author: "Helen Keller" },
+  { text: "Strive not to be a success, but rather to be OF VALUE.", author: "Albert Einstein" },
+  { text: "You MISS 100% of the shots you don't take.", author: "Wayne Gretzky" },
+  { text: "THE MIND IS EVERYTHING. What you think, you become.", author: "Buddha" },
+  { text: "The best time to plant a tree was 20 years ago. THE SECOND BEST TIME IS NOW.", author: "Chinese Proverb" },
+  { text: "An UNEXAMINED LIFE is not worth living.", author: "Socrates" },
+  { text: "Eighty percent of success is just SHOWING UP.", author: "Woody Allen" },
+  { text: "Your time is LIMITED. Don't waste it living someone else's life.", author: "Steve Jobs" },
+  { text: "WINNING isn't everything — but WANTING TO WIN is.", author: "Vince Lombardi" },
+  { text: "I am not a product of my circumstances. I AM A PRODUCT OF MY DECISIONS.", author: "Stephen Covey" },
+  { text: "You can NEVER CROSS THE OCEAN until you have the courage to lose sight of the shore.", author: "Christopher Columbus" },
+  { text: "Either write something WORTH READING or do something WORTH WRITING.", author: "Benjamin Franklin" },
+  { text: "To LIVE is the rarest thing in the world. Most people exist — that is all.", author: "Oscar Wilde" },
+  { text: "The only person you are destined to become is THE PERSON YOU DECIDE TO BE.", author: "Ralph Waldo Emerson" },
+  { text: "GO CONFIDENTLY in the direction of your dreams. Live the life you have imagined.", author: "Henry David Thoreau" },
+  { text: "BELIEVE IN YOURSELF. You are braver than you think, more talented than you know, and capable of MORE THAN YOU IMAGINE.", author: "Roy T. Bennett" },
+  { text: "Courage is not the absence of fear — it is the TRIUMPH OVER IT.", author: "Nelson Mandela" },
+  { text: "Don't count the days. MAKE THE DAYS COUNT.", author: "Muhammad Ali" },
+  { text: "If you look at what you HAVE, you'll always have more. If you look at what you don't have, you'll never have enough.", author: "Oprah Winfrey" },
+  { text: "Do not go where the path may lead — go instead where there is NO PATH and LEAVE A TRAIL.", author: "Ralph Waldo Emerson" },
+  { text: "It does not matter how slowly you go as long as you DO NOT STOP.", author: "Confucius" },
+  { text: "Our lives begin to END the day we become SILENT about things that matter.", author: "Martin Luther King Jr." },
+  { text: "Not getting what you want is sometimes a WONDERFUL STROKE OF LUCK.", author: "Dalai Lama" },
+  { text: "SET YOUR GOALS HIGH, and don't stop till you get there.", author: "Bo Jackson" },
+  { text: "What you lack in talent can be made up with pure HUSTLE.", author: "Don Zimmer" },
+  { text: "Fall seven times. STAND UP EIGHT. Every. Single. Time.", author: "Japanese Proverb" },
+  { text: "Make the iron HOT BY STRIKING. Do not wait for perfect conditions.", author: "William Butler Yeats" },
+  { text: "Action is the FOUNDATIONAL KEY to all success. Move first.", author: "Pablo Picasso" },
+  { text: "You don't have to be great to start — but you HAVE TO START to be great.", author: "Zig Ziglar" },
+  { text: "The secret of getting ahead is simply this: GET STARTED.", author: "Mark Twain" },
 ];
-
-export const PATTERN_INTERRUPT_MESSAGES = [
-  "You've been scrolling for a while. Your goals are waiting. 🌟",
-  "Pattern interrupt! Take a breath and refocus on what matters. 💪",
-  "Hey — that app isn't helping you become who you want to be. 🚀",
-  "Time check: is this moving you closer to your goal? 🎯",
-  "Break the loop. Stand up, stretch, and get back to it. ⚡",
-];
-
-export function getRandomQuote() {
-  return MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
-}
-
-export function getRandomInterrupt() {
-  return PATTERN_INTERRUPT_MESSAGES[Math.floor(Math.random() * PATTERN_INTERRUPT_MESSAGES.length)];
-}
 
 export function getDailyQuote() {
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-  return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000
+  );
+  return QUOTES[dayOfYear % QUOTES.length];
+}
+
+export function getRandomQuote() {
+  return QUOTES[Math.floor(Math.random() * QUOTES.length)];
+}
+
+const INTERRUPT_PHRASES = [
+  "Is this helping you reach your goal? GET BACK TO WORK. 💪",
+  "Every minute here is a minute NOT building your future. REFOCUS. ⚡",
+  "Your future self is watching. CHOOSE WISELY. 🔥",
+  "Champions don't scroll. CHAMPIONS EXECUTE. 🏆",
+  "The path to your goal doesn't run through here. REDIRECT. 🎯",
+  "This is a distraction. Your goals are waiting. GO! 🚀",
+  "One distraction leads to another. STOP THE CYCLE. 💥",
+  "You said you wanted it more than anything. ACT LIKE IT. 👊",
+];
+
+export function getRandomInterrupt() {
+  return INTERRUPT_PHRASES[Math.floor(Math.random() * INTERRUPT_PHRASES.length)];
 }

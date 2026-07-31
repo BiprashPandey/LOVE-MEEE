@@ -15,17 +15,13 @@ export default function AppLayout() {
     }
   }, [goal, loading, navigate]);
 
-  // Background notifications & schedule checker loop
   useEffect(() => {
     if (!goal) return;
-
-    // Check sleep/wake schedule every minute
     notificationInterval.current = setInterval(() => {
       if (goal.sleep_time && goal.wake_time) {
         NotificationService.checkSleepSchedule(goal.sleep_time, goal.wake_time);
       }
     }, 60000);
-
     return () => clearInterval(notificationInterval.current);
   }, [goal]);
 
@@ -33,7 +29,7 @@ export default function AppLayout() {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
           <p className="text-sm font-heading font-bold text-primary tracking-widest animate-pulse">LOVE MEEE</p>
         </div>
       </div>

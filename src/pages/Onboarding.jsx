@@ -1,269 +1,424 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/lib/AppContext';
-import { toast } from 'sonner';
 import {
-  Dumbbell, Briefcase, GraduationCap, Sparkles, Palette, HeartPulse, Wallet, Users,
-  ArrowRight, ArrowLeft, Moon, Sun, Check,
+  Sparkles, ArrowRight, ArrowLeft, Target, Smartphone, Moon, Sun,
+  Check, AlertTriangle,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
-const categories = [
-  { id: 'fitness', label: 'Fitness', icon: Dumbbell },
-  { id: 'career', label: 'Career', icon: Briefcase },
-  { id: 'education', label: 'Learning', icon: GraduationCap },
-  { id: 'mindfulness', label: 'Mindfulness', icon: Sparkles },
-  { id: 'creativity', label: 'Creativity', icon: Palette },
-  { id: 'health', label: 'Health', icon: HeartPulse },
-  { id: 'finance', label: 'Finance', icon: Wallet },
-  { id: 'social', label: 'Social', icon: Users },
+// ── Step config ────────────────────────────────────────────────────────────
+const STEPS = ['Your Name', 'Your Goal', 'Distractions', 'Sleep Schedule'];
+
+const EXAMPLES = [
+  'earn $1,000,000', 'get an A grade in every exam', 'lose 20 pounds',
+  'launch my own business', 'run a full marathon', 'read 24 books this year',
+  'get into my dream university', 'save $10,000', 'learn to code fluently',
 ];
 
-const distractingApps = [
-  'Instagram', 'TikTok', 'YouTube', 'Twitter/X', 'Facebook',
+const DISTRACTION_APPS = [
+  'Instagram', 'TikTok', 'YouTube', 'Twitter / X', 'Facebook',
   'Snapchat', 'Reddit', 'Netflix', 'Discord', 'Games',
 ];
 
-const steps = ['Welcome', 'Your Goal', 'Distracting Apps', 'Sleep Schedule'];
+// ── Gradient text helper ───────────────────────────────────────────────────
+const gradStyle = {
+  background: 'linear-gradient(90deg, #e879f9, #f9a8d4, #fde68a)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+};
 
+// ── Step indicator ─────────────────────────────────────────────────────────
+function StepDots({ current }) {
+  return (
+    <div className="flex items-center justify-center gap-2 mb-8">
+      {STEPS.map((label, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <div
+            className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300"
+            style={{
+              background: i <= current
+                ? 'linear-gradient(135deg, #a855f7, #ec4899)'
+                : 'rgba(255,255,255,0.08)',
+              color: i <= current ? '#fff' : 'rgba(255,255,255,0.3)',
+            }}
+          >
+            {i < current ? <Check className="h-3 w-3" /> : i + 1}
+          </div>
+          {i < STEPS.length - 1 && (
+            <div className="h-px w-6 rounded-full transition-all duration-300"
+              style={{ background: i < current ? '#a855f7' : 'rgba(255,255,255,0.1)' }} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Step 0: Name ────────────────────────────────────────────────
+function NameStep({ name, setName, onNext }) {
+  return (
+    <motion.div key="name" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
+      <div className="mb-6 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl text-xl">👋</span>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 1</p>
+          <h2 className="text-base font-bold text-white">What's your name?</h2>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <div>
+          <p className="text-sm text-white/50 mb-4 leading-relaxed">
+            We'll use your name to personalize your daily experience — greeting you every morning and keeping you accountable.
+          </p>
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="e.g. Alex, Jordan, Sam…"
+            autoFocus
+            className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-lg font-bold text-white placeholder-white/20 focus:outline-none focus:border-fuchsia-500 transition-colors"
+          />
+        </div>
+
+        <button
+          onClick={onNext}
+          disabled={!name.trim()}
+          className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black text-white disabled:opacity-30 transition-all"
+          style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', boxShadow: name ? '0 8px 32px rgba(168,85,247,0.4)' : undefined }}
+        >
+          Let's go <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Step 1: Goal ───────────────────────────────────────────────────────────
+function GoalStep({ goalText, setGoalText, deadline, setDeadline, onNext }) {
+  const today = new Date().toISOString().split('T')[0];
+
+  return (
+    <motion.div key="goal" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
+      <div className="mb-6 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl"
+          style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)' }}>
+          <Target className="h-5 w-5 text-white" />
+        </span>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 1</p>
+          <h2 className="text-base font-bold text-white">Set your commitment</h2>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        {/* Fill-in-blank */}
+        <div className="space-y-4">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-xl font-black text-white/70 whitespace-nowrap">I will</span>
+            <div className="flex-1 min-w-[160px]">
+              <input
+                type="text"
+                value={goalText}
+                onChange={e => setGoalText(e.target.value)}
+                placeholder="earn $1M · get an A grade · run a marathon"
+                autoFocus
+                className="w-full rounded-xl border-0 border-b-2 bg-transparent pb-1 text-lg font-bold text-white placeholder-white/20 focus:outline-none transition-colors"
+                style={{ borderBottomColor: goalText ? '#a855f7' : 'rgba(255,255,255,0.15)' }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-xl font-black text-white/70 whitespace-nowrap">by</span>
+            <div className="relative flex-1 min-w-[150px]">
+              <input
+                type="date"
+                value={deadline}
+                onChange={e => setDeadline(e.target.value)}
+                min={today}
+                className="w-full rounded-xl border-0 border-b-2 bg-transparent pb-1 text-lg font-bold text-white focus:outline-none transition-colors"
+                style={{
+                  borderBottomColor: deadline ? '#ec4899' : 'rgba(255,255,255,0.15)',
+                  colorScheme: 'dark',
+                }}
+              />
+              {!deadline && (
+                <span className="pointer-events-none absolute left-0 top-0 text-lg font-bold text-white/20">
+                  [optional date]
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Specificity warning */}
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+          <p className="text-xs font-semibold text-amber-400/90 leading-relaxed">
+            ⚡ Be <span className="uppercase font-black">specific</span>. Not "be successful" —
+            what <em>exactly</em> will you achieve?
+          </p>
+        </div>
+
+        {/* Example chips */}
+        <div className="space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/25">Tap an example</p>
+          <div className="flex flex-wrap gap-1.5">
+            {EXAMPLES.map(ex => (
+              <button key={ex} type="button" onClick={() => setGoalText(ex)}
+                className="rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold text-white/40 hover:border-fuchsia-500/50 hover:text-fuchsia-300 transition-all active:scale-95">
+                {ex}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={onNext}
+          disabled={!goalText.trim()}
+          className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black text-white disabled:opacity-30 transition-all"
+          style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', boxShadow: goalText ? '0 8px 32px rgba(168,85,247,0.4)' : undefined }}
+        >
+          Next <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Step 2: Distractions ───────────────────────────────────────────────────
+function DistractionsStep({ selected, setSelected, onNext, onBack }) {
+  const toggle = (app) =>
+    setSelected(prev => prev.includes(app) ? prev.filter(a => a !== app) : [...prev, app]);
+
+  return (
+    <motion.div key="dist" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
+      <div className="mb-6 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl"
+          style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)' }}>
+          <AlertTriangle className="h-5 w-5 text-white" />
+        </span>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 2</p>
+          <h2 className="text-base font-bold text-white">Your distractions</h2>
+        </div>
+      </div>
+
+      <p className="text-sm text-white/50 mb-5 leading-relaxed">
+        Which apps pull you away from your goal? We'll remind you to refocus when you're distracted.
+      </p>
+
+      <div className="grid grid-cols-2 gap-2 mb-6">
+        {DISTRACTION_APPS.map(app => {
+          const on = selected.includes(app);
+          return (
+            <button key={app} onClick={() => toggle(app)}
+              className="flex items-center gap-2 rounded-xl border p-3 text-left text-xs font-semibold transition-all active:scale-95"
+              style={{
+                borderColor: on ? '#a855f7' : 'rgba(255,255,255,0.08)',
+                background: on ? 'rgba(168,85,247,0.12)' : 'rgba(255,255,255,0.03)',
+                color: on ? '#e879f9' : 'rgba(255,255,255,0.5)',
+              }}>
+              {on && <Check className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e879f9' }} />}
+              <span className={on ? '' : 'ml-5'}>{app}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-3">
+        <button onClick={onBack}
+          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-white/10 text-white/50 hover:text-white transition-colors">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <button onClick={onNext}
+          className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-black text-white transition-all"
+          style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)' }}>
+          Next <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Step 3: Sleep schedule ─────────────────────────────────────────────────
+function SleepStep({ sleepTime, setSleepTime, wakeTime, setWakeTime, onFinish, onBack, saving }) {
+  return (
+    <motion.div key="sleep" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
+      <div className="mb-6 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl"
+          style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+          <Moon className="h-5 w-5 text-white" />
+        </span>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 3</p>
+          <h2 className="text-base font-bold text-white">Sleep schedule</h2>
+        </div>
+      </div>
+
+      <p className="text-sm text-white/50 mb-6 leading-relaxed">
+        We'll send you a bedtime reminder and a morning boost notification. Both are optional.
+      </p>
+
+      <div className="space-y-4 mb-7">
+        {/* Bedtime */}
+        <div className="rounded-2xl border border-white/8 bg-white/3 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Moon className="h-4 w-4 text-indigo-400" />
+            <p className="text-xs font-bold text-white/70">Bedtime reminder</p>
+          </div>
+          <input
+            type="time"
+            value={sleepTime}
+            onChange={e => setSleepTime(e.target.value)}
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-lg font-bold text-white focus:outline-none focus:border-indigo-500 transition-colors"
+            style={{ colorScheme: 'dark' }}
+          />
+        </div>
+
+        {/* Wake time */}
+        <div className="rounded-2xl border border-white/8 bg-white/3 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Sun className="h-4 w-4 text-amber-400" />
+            <p className="text-xs font-bold text-white/70">Morning wake-up boost</p>
+          </div>
+          <input
+            type="time"
+            value={wakeTime}
+            onChange={e => setWakeTime(e.target.value)}
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-lg font-bold text-white focus:outline-none focus:border-amber-500 transition-colors"
+            style={{ colorScheme: 'dark' }}
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <button onClick={onBack}
+          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-white/10 text-white/50 hover:text-white transition-colors">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <button onClick={onFinish} disabled={saving}
+          className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-black text-white shadow-2xl transition-all disabled:opacity-40"
+          style={{
+            background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+            boxShadow: '0 8px 32px rgba(168,85,247,0.4)',
+          }}>
+          {saving ? 'Setting up…' : (<>Start LOVE MEEE <Sparkles className="h-4 w-4" /></>)}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Main Onboarding ────────────────────────────────────────────────────────
 export default function Onboarding() {
-  const { goal, saveGoal } = useApp();
-  const [step, setStep] = useState(0);
-  const [category, setCategory] = useState('');
-  const [goalText, setGoalText] = useState('');
-  const [selectedApps, setSelectedApps] = useState([]);
-  const [sleepTime, setSleepTime] = useState('23:00');
-  const [wakeTime, setWakeTime] = useState('07:00');
-  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
+  const { saveGoal } = useApp();
 
-  useEffect(() => {
-    if (goal) {
-      setCategory(goal.goal_category || '');
-      setGoalText(goal.primary_goal || '');
-      setSelectedApps(goal.monitored_apps || []);
-      setSleepTime(goal.sleep_time || '23:00');
-      setWakeTime(goal.wake_time || '07:00');
-    }
-  }, [goal]);
-
-  const toggleApp = (app) => {
-    setSelectedApps(prev =>
-      prev.includes(app) ? prev.filter(a => a !== app) : [...prev, app]
-    );
-  };
-
-  const canProceed = () => {
-    if (step === 1) return category !== '';
-    if (step === 2) return selectedApps.length > 0;
-    return true;
-  };
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState('');
+  const [goalText, setGoalText] = useState('');
+  const [deadline, setDeadline] = useState('');
+  const [selectedApps, setSelectedApps] = useState([]);
+  const [sleepTime, setSleepTime] = useState('22:30');
+  const [wakeTime, setWakeTime] = useState('06:30');
+  const [saving, setSaving] = useState(false);
 
   const handleFinish = async () => {
     setSaving(true);
     try {
+      // Save name to localStorage for the splash screen
+      if (name.trim()) localStorage.setItem('love_meee_user_name', name.trim());
       await saveGoal({
-        primary_goal: goalText.trim() || `Focus on ${categories.find(c => c.id === category)?.label || 'my goals'}`,
-        goal_category: category || 'career',
-        monitored_apps: selectedApps,
+        title: goalText.trim(),
+        deadline: deadline || null,
+        distracting_apps: selectedApps,
         sleep_time: sleepTime,
         wake_time: wakeTime,
-        work_interval: 25,
-        break_interval: 5,
+        user_name: name.trim(),
+        created_date: new Date().toISOString(),
       });
-      toast.success("You're all set! Let's go! 🚀");
-      navigate('/', { replace: true });
+      navigate('/');
     } catch {
-      toast.error('Something went wrong. Please try again.');
-    } finally {
       setSaving(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="mx-auto w-full max-w-md flex-1 flex flex-col px-6">
-        {step > 0 && (
-          <div className="flex items-center gap-2 pt-6">
-            {steps.slice(1).map((s, i) => (
-              <div
-                key={s}
-                className={cn(
-                  'h-1.5 flex-1 rounded-full transition-colors',
-                  i < step ? 'bg-primary' : 'bg-muted'
-                )}
-              />
-            ))}
-          </div>
-        )}
+  const handleSkip = () => navigate('/');
 
-        <div className="flex-1 flex flex-col justify-center py-8">
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-5 py-10 relative overflow-hidden"
+      style={{ background: 'linear-gradient(145deg, #09090b 0%, #18051a 55%, #09090b 100%)' }}
+    >
+      {/* Glow blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-20 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #a855f7, transparent)' }} />
+        <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full opacity-15 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #ec4899, transparent)' }} />
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 w-full max-w-md"
+      >
+        {/* Logo */}
+        <div className="mb-8 text-center">
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+            className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl shadow-2xl"
+            style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)' }}>
+            <Sparkles className="h-8 w-8 text-white" />
+          </motion.div>
+          <h1 className="text-3xl font-black tracking-tight" style={gradStyle}>LOVE MEEE</h1>
+          <p className="mt-1 text-xs text-white/40">Let's set up your productivity companion</p>
+        </div>
+
+        {/* Step dots */}
+        <StepDots current={step} />
+
+        {/* Card */}
+        <div className="rounded-3xl border border-white/8 p-6 shadow-2xl overflow-hidden"
+          style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)' }}>
           <AnimatePresence mode="wait">
             {step === 0 && (
-              <motion.div
-                key="welcome"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="flex flex-col items-center text-center"
-              >
-                <motion.div
-                  initial={{ scale: 0.5 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                  className="mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-rose-400 shadow-xl shadow-primary/30"
-                >
-                  <HeartPulse className="h-12 w-12 text-white" />
-                </motion.div>
-                <h1 className="font-heading text-4xl font-extrabold text-foreground tracking-tight">
-                  LOVE MEEE
-                </h1>
-                <p className="mt-3 text-base text-muted-foreground max-w-xs">
-                  Your personal productivity & motivation companion. Build streaks, crush goals, and become your best self.
-                </p>
-                <button
-                  onClick={() => setStep(1)}
-                  className="mt-10 flex items-center gap-2 rounded-2xl bg-primary px-8 py-4 text-primary-foreground font-semibold shadow-lg shadow-primary/30 transition-transform active:scale-95"
-                >
-                  Get Started <ArrowRight className="h-5 w-5" />
-                </button>
-              </motion.div>
+              <NameStep name={name} setName={setName} onNext={() => setStep(1)} />
             )}
-
             {step === 1 && (
-              <motion.div
-                key="goal"
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -30 }}
-              >
-                <h2 className="font-heading text-2xl font-bold text-foreground mb-1">What's your main goal?</h2>
-                <p className="text-sm text-muted-foreground mb-6">Pick the area you want to focus on most.</p>
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  {categories.map(({ id, label, icon: Icon }) => (
-                    <button
-                      key={id}
-                      onClick={() => setCategory(id)}
-                      className={cn(
-                        'flex flex-col items-center gap-2 rounded-2xl border-2 p-5 transition-all active:scale-95',
-                        category === id
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-border text-muted-foreground hover:border-primary/30'
-                      )}
-                    >
-                      <Icon className="h-7 w-7" />
-                      <span className="text-sm font-semibold">{label}</span>
-                    </button>
-                  ))}
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-foreground mb-2 block">Describe your goal (optional)</label>
-                  <input
-                    type="text"
-                    value={goalText}
-                    onChange={e => setGoalText(e.target.value)}
-                    placeholder="e.g. Run a 5K, learn Spanish, write a book..."
-                    className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-              </motion.div>
+              <GoalStep
+                goalText={goalText} setGoalText={setGoalText}
+                deadline={deadline} setDeadline={setDeadline}
+                onNext={() => setStep(2)}
+              />
             )}
-
             {step === 2 && (
-              <motion.div
-                key="apps"
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -30 }}
-              >
-                <h2 className="font-heading text-2xl font-bold text-foreground mb-1">What distracts you?</h2>
-                <p className="text-sm text-muted-foreground mb-6">Select apps you want to monitor. We'll send pattern-interrupt nudges when you use them too long.</p>
-                <div className="flex flex-wrap gap-2">
-                  {distractingApps.map(app => (
-                    <button
-                      key={app}
-                      onClick={() => toggleApp(app)}
-                      className={cn(
-                        'flex items-center gap-1.5 rounded-full border-2 px-4 py-2 text-sm font-medium transition-all active:scale-90',
-                        selectedApps.includes(app)
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-border text-muted-foreground hover:border-primary/30'
-                      )}
-                    >
-                      {selectedApps.includes(app) && <Check className="h-3.5 w-3.5" />}
-                      {app}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
+              <DistractionsStep
+                selected={selectedApps} setSelected={setSelectedApps}
+                onNext={() => setStep(3)} onBack={() => setStep(1)}
+              />
             )}
-
             {step === 3 && (
-              <motion.div
-                key="sleep"
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -30 }}
-              >
-                <h2 className="font-heading text-2xl font-bold text-foreground mb-1">Sleep schedule</h2>
-                <p className="text-sm text-muted-foreground mb-6">Set your sleep and wake times for routine reminders.</p>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10">
-                      <Moon className="h-6 w-6 text-indigo-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-foreground">Bedtime</p>
-                      <p className="text-xs text-muted-foreground">Wind down & sleep</p>
-                    </div>
-                    <input
-                      type="time"
-                      value={sleepTime}
-                      onChange={e => setSleepTime(e.target.value)}
-                      className="rounded-xl border border-input bg-background px-3 py-2 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                  <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10">
-                      <Sun className="h-6 w-6 text-amber-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-foreground">Wake up</p>
-                      <p className="text-xs text-muted-foreground">Start your day</p>
-                    </div>
-                    <input
-                      type="time"
-                      value={wakeTime}
-                      onChange={e => setWakeTime(e.target.value)}
-                      className="rounded-xl border border-input bg-background px-3 py-2 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                </div>
-              </motion.div>
+              <SleepStep
+                sleepTime={sleepTime} setSleepTime={setSleepTime}
+                wakeTime={wakeTime} setWakeTime={setWakeTime}
+                onFinish={handleFinish} onBack={() => setStep(2)}
+                saving={saving}
+              />
             )}
           </AnimatePresence>
         </div>
 
-        {step > 0 && (
-          <div className="flex items-center gap-3 pb-8">
-            <button
-              onClick={() => setStep(s => s - 1)}
-              className="flex items-center gap-1.5 rounded-2xl border border-border bg-card px-5 py-3.5 text-sm font-semibold text-muted-foreground transition-transform active:scale-95"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back
-            </button>
-            <button
-              disabled={!canProceed() || saving}
-              onClick={() => step === 3 ? handleFinish() : setStep(s => s + 1)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition-transform active:scale-95 disabled:opacity-40"
-            >
-              {saving ? 'Saving...' : step === 3 ? 'Complete Setup' : 'Continue'}
-              {step !== 3 && !saving && <ArrowRight className="h-4 w-4" />}
-            </button>
-          </div>
-        )}
-      </div>
+        {/* Skip */}
+        <button onClick={handleSkip}
+          className="mt-5 w-full text-center text-xs text-white/20 hover:text-white/40 transition-colors py-2">
+          Skip setup — I'll configure later
+        </button>
+      </motion.div>
     </div>
   );
 }

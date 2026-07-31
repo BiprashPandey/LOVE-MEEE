@@ -18,6 +18,7 @@ import Dashboard from '@/pages/Dashboard';
 import Tasks from '@/pages/Tasks';
 import Pomodoro from '@/pages/Pomodoro';
 import CalendarPage from '@/pages/CalendarPage';
+import Extra from '@/pages/Extra';
 import AppLayout from '@/components/AppLayout';
 
 const AuthenticatedApp = () => {
@@ -44,6 +45,7 @@ const AuthenticatedApp = () => {
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/focus" element={<Pomodoro />} />
           <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/extra" element={<Extra />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

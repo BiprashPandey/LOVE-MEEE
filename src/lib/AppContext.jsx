@@ -48,7 +48,6 @@ export const AppProvider = ({ children }) => {
           seeded.push(created);
         }
         finalReels = seeded;
-        toast.success('17 motivation reels added to your pool! Downloading… \uD83C\uDFAC');
       }
       setReels(finalReels);
 
@@ -61,10 +60,13 @@ export const AppProvider = ({ children }) => {
     }
   }, []);
 
+  // Dynamic download server URL — works on localhost AND phone WiFi
+  const DL_SERVER = `${window.location.protocol}//${window.location.hostname}:3001`;
+
   // Fetch the local video registry from the download server
   const fetchReelRegistry = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:3001/registry', { signal: AbortSignal.timeout(3000) });
+      const res = await fetch(`${DL_SERVER}/registry`, { signal: AbortSignal.timeout(3000) });
       if (res.ok) {
         const reg = await res.json();
         setReelRegistry(reg);
@@ -90,7 +92,7 @@ export const AppProvider = ({ children }) => {
       // Send priority + 2 early-batch immediately
       const firstSync = [...priorityReels, ...earlyBatch];
       if (firstSync.length) {
-        await fetch('http://localhost:3001/sync-reels', {
+        await fetch(`${DL_SERVER}/sync-reels`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -104,7 +106,7 @@ export const AppProvider = ({ children }) => {
       if (laterBatch.length) {
         setTimeout(async () => {
           try {
-            await fetch('http://localhost:3001/sync-reels', {
+            await fetch(`${DL_SERVER}/sync-reels`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ reels: laterBatch.map(r => ({ url: r.url, title: r.title })) }),
@@ -137,6 +139,21 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     NotificationService.requestPermission();
   }, []);
+
+  // Daily goal countdown notification (fires once per day)
+  useEffect(() => {
+    if (goal?.title) {
+      NotificationService.sendGoalCountdownIfNeeded(goal);
+    }
+  }, [goal]);
+
+  // Daily reel notification (fires once per day after reels load)
+  useEffect(() => {
+    if (reels?.length) {
+      const featured = reels.find(r => r.priority) || reels[0];
+      NotificationService.sendReelNotificationIfNeeded(featured?.title || 'Daily Motivation');
+    }
+  }, [reels]);
 
   const updateTodayLog = async ({ tasksDelta = 0, focusDelta = 0 }) => {
     const today = getTodayStr();

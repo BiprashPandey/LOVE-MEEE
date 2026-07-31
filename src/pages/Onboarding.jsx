@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/lib/AppContext';
 import {
-  Sparkles, ArrowRight, ArrowLeft, Target, Smartphone, Moon, Sun,
-  Check, AlertTriangle,
+  Sparkles, ArrowRight, ArrowLeft, Target, Moon, Sun,
+  Check, AlertTriangle, Palette,
 } from 'lucide-react';
 
 // ── Step config ────────────────────────────────────────────────────────────
-const STEPS = ['Your Name', 'Your Goal', 'Distractions', 'Sleep Schedule'];
+const STEPS = ['Your Name', 'App Theme', 'Your Goal', 'Distractions', 'Sleep Schedule'];
 
 const EXAMPLES = [
   'earn $1,000,000', 'get an A grade in every exam', 'lose 20 pounds',
@@ -21,6 +21,30 @@ const DISTRACTION_APPS = [
   'Snapchat', 'Reddit', 'Netflix', 'Discord', 'Games',
 ];
 
+const THEME_OPTIONS = [
+  {
+    id: 'pink-red',
+    name: 'Pink-Red',
+    desc: 'Rose & Fuchsia glow (Default)',
+    previewBg: 'linear-gradient(135deg, #e11d48, #ec4899)',
+    border: '#f43f5e',
+  },
+  {
+    id: 'green',
+    name: 'Green',
+    desc: 'Emerald & Mint focus',
+    previewBg: 'linear-gradient(135deg, #059669, #10b981)',
+    border: '#10b981',
+  },
+  {
+    id: 'golden',
+    name: 'Golden',
+    desc: 'Amber & Gold energy',
+    previewBg: 'linear-gradient(135deg, #d97706, #f59e0b)',
+    border: '#f59e0b',
+  },
+];
+
 // ── Gradient text helper ───────────────────────────────────────────────────
 const gradStyle = {
   background: 'linear-gradient(90deg, #e879f9, #f9a8d4, #fde68a)',
@@ -31,9 +55,9 @@ const gradStyle = {
 // ── Step indicator ─────────────────────────────────────────────────────────
 function StepDots({ current }) {
   return (
-    <div className="flex items-center justify-center gap-2 mb-8">
+    <div className="flex items-center justify-center gap-1.5 mb-8">
       {STEPS.map((label, i) => (
-        <div key={i} className="flex items-center gap-2">
+        <div key={i} className="flex items-center gap-1.5">
           <div
             className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300"
             style={{
@@ -46,7 +70,7 @@ function StepDots({ current }) {
             {i < current ? <Check className="h-3 w-3" /> : i + 1}
           </div>
           {i < STEPS.length - 1 && (
-            <div className="h-px w-6 rounded-full transition-all duration-300"
+            <div className="h-px w-4 rounded-full transition-all duration-300"
               style={{ background: i < current ? '#a855f7' : 'rgba(255,255,255,0.1)' }} />
           )}
         </div>
@@ -95,8 +119,82 @@ function NameStep({ name, setName, onNext }) {
   );
 }
 
-// ── Step 1: Goal ───────────────────────────────────────────────────────────
-function GoalStep({ goalText, setGoalText, deadline, setDeadline, onNext }) {
+// ── Step 1: Theme ──────────────────────────────────────────────────────────
+function ThemeStep({ selectedTheme, setSelectedTheme, onNext, onBack }) {
+  const { changeTheme } = useApp();
+
+  const handleSelect = (id) => {
+    setSelectedTheme(id);
+    changeTheme?.(id);
+  };
+
+  return (
+    <motion.div key="theme" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
+      <div className="mb-6 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl"
+          style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)' }}>
+          <Palette className="h-5 w-5 text-white" />
+        </span>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 2</p>
+          <h2 className="text-base font-bold text-white">Choose your app theme</h2>
+        </div>
+      </div>
+
+      <p className="text-sm text-white/50 mb-5 leading-relaxed">
+        Select the theme for your app interface. You can change this anytime later in Extra settings.
+      </p>
+
+      <div className="space-y-3 mb-6">
+        {THEME_OPTIONS.map(opt => {
+          const isSelected = selectedTheme === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => handleSelect(opt.id)}
+              className="w-full flex items-center justify-between rounded-2xl border p-4 transition-all active:scale-98"
+              style={{
+                borderColor: isSelected ? opt.border : 'rgba(255,255,255,0.1)',
+                background: isSelected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+                boxShadow: isSelected ? `0 0 20px ${opt.border}33` : undefined,
+              }}
+            >
+              <div className="flex items-center gap-3.5">
+                <div
+                  className="h-8 w-8 rounded-xl flex-shrink-0 shadow-md"
+                  style={{ background: opt.previewBg }}
+                />
+                <div className="text-left">
+                  <p className="text-sm font-bold text-white">{opt.name}</p>
+                  <p className="text-xs text-white/40">{opt.desc}</p>
+                </div>
+              </div>
+              <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-white bg-white text-black' : 'border-white/20'}`}>
+                {isSelected && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-3">
+        <button onClick={onBack}
+          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-white/10 text-white/50 hover:text-white transition-colors">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <button onClick={onNext}
+          className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-black text-white transition-all"
+          style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)' }}>
+          Next <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Step 2: Goal ───────────────────────────────────────────────────────────
+function GoalStep({ goalText, setGoalText, deadline, setDeadline, onNext, onBack }) {
   const today = new Date().toISOString().split('T')[0];
 
   return (
@@ -107,7 +205,7 @@ function GoalStep({ goalText, setGoalText, deadline, setDeadline, onNext }) {
           <Target className="h-5 w-5 text-white" />
         </span>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 1</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 3</p>
           <h2 className="text-base font-bold text-white">Set your commitment</h2>
         </div>
       </div>
@@ -174,20 +272,26 @@ function GoalStep({ goalText, setGoalText, deadline, setDeadline, onNext }) {
           </div>
         </div>
 
-        <button
-          onClick={onNext}
-          disabled={!goalText.trim()}
-          className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black text-white disabled:opacity-30 transition-all"
-          style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', boxShadow: goalText ? '0 8px 32px rgba(168,85,247,0.4)' : undefined }}
-        >
-          Next <ArrowRight className="h-4 w-4" />
-        </button>
+        <div className="flex gap-3">
+          <button onClick={onBack}
+            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-white/10 text-white/50 hover:text-white transition-colors">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <button
+            onClick={onNext}
+            disabled={!goalText.trim()}
+            className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black text-white disabled:opacity-30 transition-all"
+            style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', boxShadow: goalText ? '0 8px 32px rgba(168,85,247,0.4)' : undefined }}
+          >
+            Next <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </motion.div>
   );
 }
 
-// ── Step 2: Distractions ───────────────────────────────────────────────────
+// ── Step 3: Distractions ───────────────────────────────────────────────────
 function DistractionsStep({ selected, setSelected, onNext, onBack }) {
   const toggle = (app) =>
     setSelected(prev => prev.includes(app) ? prev.filter(a => a !== app) : [...prev, app]);
@@ -200,7 +304,7 @@ function DistractionsStep({ selected, setSelected, onNext, onBack }) {
           <AlertTriangle className="h-5 w-5 text-white" />
         </span>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 2</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 4</p>
           <h2 className="text-base font-bold text-white">Your distractions</h2>
         </div>
       </div>
@@ -242,7 +346,7 @@ function DistractionsStep({ selected, setSelected, onNext, onBack }) {
   );
 }
 
-// ── Step 3: Sleep schedule ─────────────────────────────────────────────────
+// ── Step 4: Sleep schedule ─────────────────────────────────────────────────
 function SleepStep({ sleepTime, setSleepTime, wakeTime, setWakeTime, onFinish, onBack, saving }) {
   return (
     <motion.div key="sleep" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
@@ -252,7 +356,7 @@ function SleepStep({ sleepTime, setSleepTime, wakeTime, setWakeTime, onFinish, o
           <Moon className="h-5 w-5 text-white" />
         </span>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 3</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Step 5</p>
           <h2 className="text-base font-bold text-white">Sleep schedule</h2>
         </div>
       </div>
@@ -314,10 +418,11 @@ function SleepStep({ sleepTime, setSleepTime, wakeTime, setWakeTime, onFinish, o
 // ── Main Onboarding ────────────────────────────────────────────────────────
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { saveGoal } = useApp();
+  const { saveGoal, changeTheme, appTheme } = useApp();
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
+  const [selectedTheme, setSelectedTheme] = useState(appTheme || 'pink-red');
   const [goalText, setGoalText] = useState('');
   const [deadline, setDeadline] = useState('');
   const [selectedApps, setSelectedApps] = useState([]);
@@ -328,8 +433,8 @@ export default function Onboarding() {
   const handleFinish = async () => {
     setSaving(true);
     try {
-      // Save name to localStorage for the splash screen
       if (name.trim()) localStorage.setItem('love_meee_user_name', name.trim());
+      changeTheme?.(selectedTheme);
       await saveGoal({
         title: goalText.trim(),
         deadline: deadline || null,
@@ -337,6 +442,7 @@ export default function Onboarding() {
         sleep_time: sleepTime,
         wake_time: wakeTime,
         user_name: name.trim(),
+        theme: selectedTheme,
         created_date: new Date().toISOString(),
       });
       navigate('/');
@@ -390,23 +496,29 @@ export default function Onboarding() {
               <NameStep name={name} setName={setName} onNext={() => setStep(1)} />
             )}
             {step === 1 && (
-              <GoalStep
-                goalText={goalText} setGoalText={setGoalText}
-                deadline={deadline} setDeadline={setDeadline}
-                onNext={() => setStep(2)}
+              <ThemeStep
+                selectedTheme={selectedTheme} setSelectedTheme={setSelectedTheme}
+                onNext={() => setStep(2)} onBack={() => setStep(0)}
               />
             )}
             {step === 2 && (
-              <DistractionsStep
-                selected={selectedApps} setSelected={setSelectedApps}
+              <GoalStep
+                goalText={goalText} setGoalText={setGoalText}
+                deadline={deadline} setDeadline={setDeadline}
                 onNext={() => setStep(3)} onBack={() => setStep(1)}
               />
             )}
             {step === 3 && (
+              <DistractionsStep
+                selected={selectedApps} setSelected={setSelectedApps}
+                onNext={() => setStep(4)} onBack={() => setStep(2)}
+              />
+            )}
+            {step === 4 && (
               <SleepStep
                 sleepTime={sleepTime} setSleepTime={setSleepTime}
                 wakeTime={wakeTime} setWakeTime={setWakeTime}
-                onFinish={handleFinish} onBack={() => setStep(2)}
+                onFinish={handleFinish} onBack={() => setStep(3)}
                 saving={saving}
               />
             )}

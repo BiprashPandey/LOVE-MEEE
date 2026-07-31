@@ -17,6 +17,22 @@ export const AppProvider = ({ children }) => {
   const [reelRegistry, setReelRegistry] = useState({}); // url → {filename, localUrl}
   const [loading, setLoading] = useState(true);
 
+  const [appTheme, setAppThemeState] = useState(() => {
+    return localStorage.getItem('love_meee_theme') || 'pink-red';
+  });
+
+  const changeTheme = (newTheme) => {
+    setAppThemeState(newTheme);
+    localStorage.setItem('love_meee_theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
+
+  useEffect(() => {
+    const active = goal?.theme || localStorage.getItem('love_meee_theme') || 'pink-red';
+    setAppThemeState(active);
+    document.documentElement.setAttribute('data-theme', active);
+  }, [goal]);
+
   const loadAllData = useCallback(async () => {
     try {
       const [goals, allTasks, allSessions, logs, allNotes, allReels] = await Promise.all([
@@ -378,6 +394,9 @@ export const AppProvider = ({ children }) => {
       deleteNote,
       addReel,
       deleteReel,
+      appTheme,
+      changeTheme,
+      setAppTheme: changeTheme,
       refreshData: loadAllData,
       refreshRegistry: fetchReelRegistry,
     }}>

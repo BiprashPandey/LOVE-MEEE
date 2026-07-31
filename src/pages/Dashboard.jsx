@@ -11,18 +11,9 @@ import { getRandomQuote } from '@/lib/quotes';
 // ─── Splash helpers ────────────────────────────────────────────────────────
 
 function computeSplash(streak, goal) {
-  const SPLASH_KEY = 'love_meee_splash_seen';
-  const SESSION_KEY = 'love_meee_session_splash_shown';
   try {
-    if (!localStorage.getItem(SPLASH_KEY)) {
-      localStorage.setItem(SPLASH_KEY, '1');
-      return null;                     // first-ever launch → no splash
-    }
-    if (sessionStorage.getItem(SESSION_KEY)) return null; // already shown this tab
-    sessionStorage.setItem(SESSION_KEY, '1');
-
     const variant = Math.floor(Math.random() * 3);
-    const userName = localStorage.getItem('love_meee_user_name') || '';
+    const userName = goal?.user_name || localStorage.getItem('love_meee_user_name') || '';
     return { variant, userName, quote: getRandomQuote(), streak: streak || 0, goal };
   } catch {
     return null;

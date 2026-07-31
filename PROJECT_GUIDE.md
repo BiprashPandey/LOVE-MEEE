@@ -1,488 +1,222 @@
-# LOVE MEEE — Complete Project Guide
+# LOVE MEEE — Project Guide
 
-> A productivity & motivation mobile app built with React + Vite + Capacitor (Android).
-> No cloud, no subscriptions — everything runs locally on your device.
+> **This file is in `.gitignore` and will never be committed.**
+> It is your personal reference for understanding, editing, and deploying the app.
 
 ---
 
 ## Table of Contents
 
-1. [What the App Does](#1-what-the-app-does)
-2. [Tech Stack](#2-tech-stack)
-3. [Directory Structure](#3-directory-structure)
-4. [File-by-File Breakdown](#4-file-by-file-breakdown)
-5. [How Each Feature Works](#5-how-each-feature-works)
-6. [Running the App (Development)](#6-running-the-app-development)
-7. [Building the Android APK](#7-building-the-android-apk)
-8. [Publishing to Google Play Store](#8-publishing-to-google-play-store)
-9. [Adding New Features](#9-adding-new-features)
-10. [Troubleshooting](#10-troubleshooting)
+1. [What Is This App?](#1-what-is-this-app)
+2. [Folder & File Map](#2-folder--file-map)
+3. [Every Component Explained](#3-every-component-explained)
+4. [Every Page Explained](#4-every-page-explained)
+5. [Data Layer & Theme System](#5-data-layer--theme-system)
+6. [How To Change Things Manually](#6-how-to-change-things-manually)
+7. [Running the App Locally](#7-running-the-app-locally)
+8. [Play Store Deployment (Step-by-Step)](#8-play-store-deployment-step-by-step)
 
 ---
 
-## 1. What the App Does
+## 1. What Is This App?
 
-LOVE MEEE is a personal productivity companion with five core pillars:
+**LOVE MEEE** is a personal productivity and motivation app that:
+- Helps you set and track a single big commitment/goal
+- Plays locally-saved motivational Instagram/YouTube reels
+- Tracks your daily tasks, focus sessions (Pomodoro with adjustable durations), and streaks
+- Sends smart notifications (daily reel, goal countdown, sleep reminders)
+- Has a Distraction Shield that simulates/monitors distracting apps
+- Supports 3 custom color themes (**Pink-Red**, **Green**, **Golden**)
+- Works fully offline — all data is saved to `localStorage` on your device
 
-| Feature | What it does |
-|---|---|
-| **Dashboard** | Daily overview, quick notes, motivational reel card |
-| **Tasks** | Full CRUD task management with priority levels |
-| **Focus / Pomodoro** | Countdown timer (Pomodoro) + open-ended stopwatch with audio chimes & haptics |
-| **Calendar** | Visual streak tracker + tap any day to see that day's summary |
-| **Motivational Reels** | Download Instagram/YouTube reels locally — plays in-app, no Instagram opened |
-
-All data is stored **locally** (no server, no sign-up, no internet required for core features).
-
----
-
-## 2. Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend Framework | React 18 + Vite 6 |
-| Styling | Tailwind CSS 3 + shadcn/ui component primitives |
-| Animations | Framer Motion |
-| State Management | React Context API (`AppContext`) |
-| Local Storage | Browser `localStorage` (via custom `storageClient`) |
-| Native App Wrapper | Capacitor 8 (Android) |
-| Video Downloader | `yt-dlp` (Python) — wrapped by a local Node.js Express server |
-| Icons | Lucide React |
-| Toasts | Sonner |
-| Calendar | react-day-picker |
-| Charts | Recharts |
+The app is a **React (Vite) PWA** served on `localhost:5173`. A companion **Node.js download server** on port `3001` handles downloading videos via `yt-dlp`.
 
 ---
 
-## 3. Directory Structure
+## 2. Folder & File Map
 
 ```
 LOVE-MEEE/
-│
-├── android/                    ← Capacitor-generated Android project
-│   ├── app/
-│   │   ├── src/main/
-│   │   │   ├── AndroidManifest.xml  ← App permissions
-│   │   │   └── assets/public/       ← Built web app lives here
-│   │   └── build.gradle             ← Android build config
-│   ├── build.gradle                 ← Root Gradle config
-│   └── variables.gradle             ← SDK versions, dependencies
-│
 ├── public/
-│   └── videos/                 ← Downloaded reels stored here
-│       └── registry.json       ← Maps reel URLs → local filenames
-│
+│   └── videos/           ← Downloaded .mp4 files live here (git-ignored)
 ├── src/
 │   ├── api/
-│   │   ├── storageClient.js    ← localStorage CRUD engine
-│   │   └── base44Client.js     ← Compatibility re-export of storageClient
-│   │
-│   ├── components/
-│   │   ├── DistractionMonitor.jsx   ← Pattern-interrupt popups
-│   │   ├── DaySummaryModal.jsx      ← Calendar day detail view
-│   │   ├── MotivationalReel.jsx     ← Reel card with inline video player
-│   │   ├── PomodoroTimer.jsx        ← Pomodoro + stopwatch timer
-│   │   ├── QuickNoteModal.jsx       ← Quick note entry dialog
-│   │   ├── ReelPlayerModal.jsx      ← Full-screen video player modal
-│   │   └── TaskItem.jsx             ← Individual task with edit support
-│   │
+│   │   └── storageClient.js     ← All localStorage CRUD (your "database")
+│   ├── components/              ← Reusable UI pieces
+│   │   ├── AppLayout.jsx        ← Shell: bottom nav + page outlet
+│   │   ├── DistractionMonitor.jsx ← Monitored apps & pattern interrupt simulation
+│   │   ├── MotivationalReel.jsx ← Hero video card + inline reel player + heart overlay
+│   │   ├── PomodoroTimer.jsx    ← Focus timer with presets & +/- minute adjustments
+│   │   ├── ProtectedRoute.jsx   ← Redirects to onboarding if no goal set
+│   │   ├── QuickNoteModal.jsx
+│   │   ├── QuoteCard.jsx
+│   │   ├── SleepSchedule.jsx    ← Editable sleep/wake times
+│   │   ├── StreakCard.jsx        ← Streak + today's level (e.g. GRIND Day)
+│   │   └── ThemeToggle.jsx      ← Dark / Light mode toggle
+│   ├── hooks/                   ← Custom React hooks
 │   ├── lib/
-│   │   ├── AppContext.jsx       ← Global state + all actions
-│   │   ├── AuthContext.jsx      ← Local guest profile context
+│   │   ├── AppContext.jsx       ← Global state, theme engine + data operations
+│   │   ├── AuthContext.jsx      ← Auth state (local-only)
 │   │   ├── dayLog.js            ← Streak/level calculation logic
-│   │   ├── NotificationService.js  ← Web Audio API chimes + haptics
-│   │   └── quotes.js            ← Daily motivational quotes array
-│   │
+│   │   ├── defaultReels.js      ← Seed list of Instagram reel URLs
+│   │   ├── NotificationService.js ← All notifications, sounds, haptics
+│   │   ├── quotes.js            ← 100 motivational quotes array
+│   │   └── utils.js             ← Tailwind `cn()` helper
 │   ├── pages/
-│   │   ├── App.jsx              ← Root router
-│   │   ├── AppLayout.jsx        ← Tab bar + page wrapper
-│   │   ├── CalendarPage.jsx     ← Calendar + streak view
-│   │   ├── Dashboard.jsx        ← Home screen
-│   │   ├── Onboarding.jsx       ← First-launch goal setup
-│   │   ├── Pomodoro.jsx         ← Focus timer page
-│   │   └── Tasks.jsx            ← Task list page
-│   │
-│   ├── index.css                ← Tailwind base + custom CSS variables
-│   └── main.jsx                 ← React entry point
-│
-├── capacitor.config.json        ← Capacitor app ID, server config
-├── download-server.js           ← yt-dlp video download API (port 3001)
-├── start.js                     ← Starts both servers concurrently
-├── START_APP.bat                ← Double-click Windows launcher
-├── vite.config.js               ← Vite + path aliases
-├── tailwind.config.js           ← Tailwind theme
-├── package.json                 ← Scripts + dependencies
-└── PROJECT_GUIDE.md             ← This file
+│   │   ├── CalendarPage.jsx     ← History calendar view
+│   │   ├── Dashboard.jsx        ← Home tab (random splash + reel + streak + notes)
+│   │   ├── Extra.jsx            ← Color theme picker, Sleep, Distractions, Quote
+│   │   ├── Onboarding.jsx       ← 5-step setup (Name, Theme, Goal, Distractions, Sleep)
+│   │   ├── Pomodoro.jsx         ← Focus / Timer tab
+│   │   └── Tasks.jsx            ← Tasks tab
+│   ├── App.jsx                  ← Route definitions
+│   ├── index.css                ← Global styles, design tokens & 3 theme CSS variables
+│   └── main.jsx                 ← React root mount
+├── download-server.js           ← Node.js video downloader (yt-dlp)
+├── start.js                     ← Launches both servers concurrently
+├── vite.config.js               ← Vite + path alias config
+├── package.json
+└── PROJECT_GUIDE.md             ← (This file — git-ignored)
 ```
 
 ---
 
-## 4. File-by-File Breakdown
+## 3. Every Component Explained
 
-### `src/api/storageClient.js`
-The entire "database" of the app. Uses `localStorage` under the hood.
-
-- Defines collections: `Goal`, `Task`, `FocusSession`, `DayLog`, `Note`, `Reel`
-- Each collection has: `.list(sort, limit)`, `.filter(query)`, `.create(data)`, `.update(id, data)`, `.delete(id)`
-- Fires a custom DOM event `love_meee_storage_change` on every write so the UI re-renders
-- No network calls — works offline forever
-
-### `src/lib/AppContext.jsx`
-The single source of truth for all app state.
-
-- Loads all data from `storageClient` on mount
-- Exposes helper actions: `addTask`, `toggleTask`, `editTask`, `deleteTask`, `completeFocusSession`, `addNote`, `deleteNote`, `addReel`, `deleteReel`, `saveGoal`
-- Computes derived values: `streak`, `longestStreak`, `todayLog`
-- On startup, calls `POST /sync-reels` on the download server — any saved reel URLs get queued for automatic background download
-- Polls `GET /registry` every 8 seconds to know which reels are locally saved
-- Exposes `reelRegistry` (URL → local file mapping) to all components
-
-### `src/lib/NotificationService.js`
-Audio + haptic feedback engine — no external sounds needed.
-
-- `playCompletionChime()` — synthesizes a pleasant chime using Web Audio API
-- `playTickSound()` — soft tick for Pomodoro countdown
-- `triggerHapticFeedback(pattern)` — vibrates the device (works on Android)
-- `sendNotification(title, body)` — sends a browser/OS notification
-
-### `src/lib/dayLog.js`
-Pure calculation functions for streaks and productivity levels.
-
-- `computeStreak(dayLogs)` — counts consecutive productive days up to today
-- `getLongestStreak(dayLogs)` — historical best streak
-- `computeLevel(tasks, focusMinutes)` — returns `'low'`, `'medium'`, `'high'`, or `'excellent'`
-- `getTodayStr()` — returns today as `"YYYY-MM-DD"`
-
-### `src/components/MotivationalReel.jsx`
-The reel card on the Dashboard home screen.
-
-- Picks a random reel from the saved pool each session
-- Checks `reelRegistry` to see if the reel has been downloaded locally
-- If downloaded → play button is **green**, tap plays the video inline on the card immediately (no extra steps)
-- If downloading → shows a spinner badge
-- If queued → shows "Queued" badge
-- Manages the Reels Pool (add / delete / view status of all saved reels)
-
-### `src/components/ReelPlayerModal.jsx`
-Full-screen video player used when playing from the local library.
-
-- Supports YouTube embeds (iframe) and local/direct video files (`<video>`)
-- For Instagram URLs not yet downloaded, shows a branded download prompt
-
-### `download-server.js`
-A small Express HTTP server running on port **3001**.
-
-**Endpoints:**
-- `GET /status` — health check, reports yt-dlp availability and queue state
-- `GET /registry` — returns the URL→filename registry (JSON)
-- `POST /sync-reels` — accepts `[{url, title}]`, queues downloads for any not already saved
-- `POST /download` — downloads a single URL immediately
-- `GET /videos` — lists all local video files
-- `DELETE /videos/:filename` — deletes a local video
-
-**How downloads work:**
-1. Calls `yt-dlp` with the URL
-2. Uses `--cookies-from-browser chrome` so it can access reels you're logged into on Instagram in Chrome
-3. Saves to `public/videos/` as a clean `slug_timestamp.mp4`
-4. Updates `public/videos/registry.json` with the URL → filename mapping
-5. Downloads are queued sequentially (2-second gap between each) to avoid Instagram rate limiting
-
-### `start.js`
-Launches both `download-server.js` (port 3001) and Vite (port 5173) in a single terminal with color-coded output.
-
-### `START_APP.bat`
-Double-click this file in Windows Explorer to start everything. Shows a console window.
-
-### `capacitor.config.json`
-Tells Capacitor:
-- App ID: `com.lovemeee.app`
-- App Name: LOVE MEEE
-- Where the built web assets live: `dist/`
-
-### `android/app/build.gradle`
-Android build configuration:
-- `minSdkVersion 22` (Android 5.1+)
-- `targetSdkVersion 34` (Android 14)
-- `compileSdk 35`
-- `compileOptions` set to Java 17
-
-### `android/app/src/main/AndroidManifest.xml`
-Permissions the app requests on Android:
-- `INTERNET` — for loading web content
-- `VIBRATE` — haptic feedback
-- `POST_NOTIFICATIONS` — focus session completion alerts
-- `WAKE_LOCK` — keep screen on during focus sessions
+### `AppLayout.jsx`
+**What it does:** Persistent shell wrapping every page. Renders the bottom navigation bar (Home, Tasks, Focus, Calendar, Extra) and an `<Outlet>` for page content.
 
 ---
 
-## 5. How Each Feature Works
-
-### Task Management
-1. User types a task → `addTask()` in AppContext → `storageClient.Task.create()` → localStorage
-2. Toggle → `toggleTask()` → updates `completed` + `completed_at` → plays chime + haptic → `updateTodayLog({ tasksDelta: +1 })`
-3. Day log tracks `tasks_completed` count per day for the calendar heatmap
-
-### Pomodoro Timer
-1. Countdown starts (default 25 min)
-2. Every second: `playTickSound()` (subtle)
-3. On complete: `completeFocusSession('pomodoro', seconds)` → creates a FocusSession record → `updateTodayLog({ focusDelta: minutes })` → chime + vibration + OS notification
-
-### Streak System
-1. `DayLog` table has one row per day with `tasks_completed` and `focus_minutes`
-2. `computeStreak()` walks backwards from today counting consecutive days where `productivity_level !== 'low'`
-3. Displayed on the Calendar page with color-coded day cells
-
-### Calendar Day Summary
-- Tap any day cell → `DaySummaryModal` opens
-- Looks up the `DayLog` for that date
-- Shows: tasks completed that day, focus minutes, productivity badge, and any notes logged that day
-
-### Reel Auto-Download System
-1. App starts → `AppContext` calls `POST /sync-reels` with all saved reel URLs
-2. Download server queues any not yet in `registry.json`
-3. `yt-dlp` downloads each to `public/videos/`
-4. Registry updated → `AppContext` polls and updates `reelRegistry` state
-5. `MotivationalReel` sees the registry entry → play button turns green
-6. User taps → video plays inline on the card immediately
+### `MotivationalReel.jsx`
+**What it does:** Hero card on the Dashboard. Shows a motivational image with a daily quote, play button, and heart (like) button.
+- **On every refresh**: Picks a weighted random reel (liked reels have 3× higher chance).
+- **Inline Video Player (`VideoOverlay`)**: Plays the `.mp4` video directly on the card.
+- **Heart Button on Overlay**: A heart button stays overlayed right on top of playing video reels so users can heart/unheart while watching.
+- **Reel Pool Modal**: Access to manually adding/opening the reel pool modal has been disabled to keep the experience clean and focused.
 
 ---
 
-## 6. Running the App (Development)
-
-### First-time setup
-
-```bash
-# Install Node dependencies
-npm install
-
-# Install yt-dlp (for reel downloading)
-pip install yt-dlp
-```
-
-### Start everything (recommended)
-
-```bash
-npm start
-# OR: double-click START_APP.bat
-```
-
-This starts:
-- **Download server** at `http://localhost:3001`
-- **Vite dev server** at `http://localhost:5173` (also accessible on your local network)
-
-### Access on your Android phone (same WiFi)
-
-Open Chrome on your phone and go to:
-```
-http://192.168.x.x:5173
-```
-(Your PC's local IP — shown in the terminal when Vite starts)
-
-### Run individual servers separately (advanced)
-
-```bash
-# Terminal 1
-npm run download:server
-
-# Terminal 2
-npm run dev
-```
+### `PomodoroTimer.jsx`
+**What it does:** Adjustable focus timer with Pomodoro and Stopwatch modes.
+- **Settings Panel (⚙️)**:
+  - Presets: `15/5`, `25/5`, `45/10`, `90/20` (focus/break minutes)
+  - Steppers: `+` / `-` buttons to fine-tune focus and break minutes.
+- Logs completed focus minutes to `FocusSession` & `DayLog`.
 
 ---
 
-## 7. Building the Android APK
-
-### Debug APK (for testing on your phone)
-
-```bash
-# 1. Build the web app
-npm run build
-
-# 2. Sync to Android project
-npx cap sync android
-
-# 3. Build the APK
-cd android
-.\gradlew.bat assembleDebug
-
-# Output: android/app/build/outputs/apk/debug/app-debug.apk
-```
-
-### Install on connected Android phone via USB
-
-```bash
-# Make sure USB debugging is ON in Developer Options
-npx cap run android
-```
-
-Or manually via `adb`:
-```bash
-adb install android\app\build\outputs\apk\debug\app-debug.apk
-```
+### `StreakCard.jsx`
+**What it does:** Displays 3 metrics: current streak, best streak, and today's productivity level (`On Fire`, `Solid`, `Getting Started`, or `GRIND Day`).
 
 ---
 
-## 8. Publishing to Google Play Store
-
-### Step 1 — Create a Release Keystore (one time only)
-
-```bash
-keytool -genkeypair -v -keystore lovemeee-release.keystore -alias lovemeee -keyalg RSA -keysize 2048 -validity 10000
-```
-
-Save this file somewhere safe. **If you lose it, you cannot update the app on Play Store.**
-
-### Step 2 — Configure signing in Gradle
-
-Edit `android/app/build.gradle` and add:
-
-```groovy
-android {
-    signingConfigs {
-        release {
-            storeFile file('../../lovemeee-release.keystore')
-            storePassword 'YOUR_STORE_PASSWORD'
-            keyAlias 'lovemeee'
-            keyPassword 'YOUR_KEY_PASSWORD'
-        }
-    }
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
-        }
-    }
-}
-```
-
-### Step 3 — Build the release AAB (Android App Bundle)
-
-```bash
-npm run build:aab
-# OR manually:
-npm run build
-npx cap sync android
-cd android
-.\gradlew.bat bundleRelease
-```
-
-Output: `android/app/build/outputs/bundle/release/app-release.aab`
-
-### Step 4 — Create a Google Play Developer Account
-
-1. Go to [play.google.com/console](https://play.google.com/console)
-2. Pay the one-time $25 registration fee
-3. Complete account details
-
-### Step 5 — Create a New App
-
-1. Click **"Create app"**
-2. Set: App name `LOVE MEEE`, Default language `English`, App type `App`, Free/Paid
-3. Complete all required sections:
-   - **App content**: Privacy policy URL, content rating questionnaire
-   - **Store listing**: App description, screenshots (at least 2 phone screenshots), feature graphic (1024×500px), app icon (512×512px)
-   - **Pricing & distribution**: Select countries
-
-### Step 6 — Upload the AAB
-
-1. Go to **Production** → **Create new release**
-2. Upload `app-release.aab`
-3. Write release notes
-4. Click **"Review release"** → **"Start rollout to Production"**
-
-### Step 7 — Wait for Review
-
-Google takes **1–7 days** for first-time reviews. You'll get an email.
-
-### Screenshots needed for Play Store
-
-- **Phone**: At least 2, up to 8 (recommended size: 1080×1920px)
-- **Feature graphic**: 1024×500px (banner image)
-- **App icon**: 512×512px PNG
-
-> **Tip**: Take screenshots of the app running on your phone (or use Android Studio's emulator) and then edit them in Canva or Figma.
-
-### Privacy Policy requirement
-
-Google requires a privacy policy URL. You can:
-1. Create a free page on [privacypolicygenerator.info](https://privacypolicygenerator.info)
-2. Host it on GitHub Pages for free
+### `SleepSchedule.jsx`
+**What it does:** Displays sleep/wake times with an inline **Edit** button to customize and save sleep schedules.
 
 ---
 
-## 9. Adding New Features
+### `DistractionMonitor.jsx`
+**What it does:** Displays monitored distraction apps with an **Edit** button to add/remove apps, plus a pattern interrupt simulation.
 
-### Add a new entity (data type)
+---
 
-1. Open `src/api/storageClient.js` and add to the `entities` object:
-```js
-Habit: createEntityMethods('habits'),
-```
+### `NotificationService.js`
+**What it does:** Central engine for Web Notifications, audio chimes, and haptics.
+- `sendGoalCountdownIfNeeded(goal)`: Sends daily goal countdown notification.
+- `sendReelNotificationIfNeeded(title)`: Sends daily reel notification (clicking it auto-plays the reel in app).
 
-2. Add to `AppContext.jsx` — load it in `loadAllData()` and create CRUD functions
+---
 
-3. Use in any component via `const { habits } = useApp()`
+## 4. Every Page Explained
 
-### Add a new page/tab
+### `Dashboard.jsx` (Home tab)
+- **Random Splash Screen Overlay**: On every page refresh or home load, one of 3 splash variants appears randomly for 3s (or until tapped):
+  1. 💬 Quote of the Day
+  2. 🔥 Streak count with fire glow
+  3. 🎯 Your stated goal / commitment
+- Renders `MotivationalReel`, `StreakCard`, and quick notes.
 
-1. Create `src/pages/MyPage.jsx`
-2. Add a route in `src/App.jsx`
-3. Add a tab button in `src/pages/AppLayout.jsx`
+### `Onboarding.jsx` (5-Step Initial Setup)
+1. **Your Name**: "What should we call you?"
+2. **App Theme**: Interactive theme picker (**Pink-Red**, **Green**, **Golden**)
+3. **Your Goal**: "I will ___ by ___"
+4. **Distractions**: Select distracting apps
+5. **Sleep Schedule**: Bedtime & wake times
+
+### `Tasks.jsx`
+- Manage daily tasks with priority tags (high/medium/low).
+
+### `Pomodoro.jsx`
+- Adjustable Pomodoro & Stopwatch focus timer.
+
+### `CalendarPage.jsx`
+- Monthly history grid showing daily productivity levels.
+
+### `Extra.jsx`
+- Color Theme Picker (Pink-Red, Green, Golden), Quote Card, Distraction Monitor, and Sleep Schedule.
+
+---
+
+## 5. Data Layer & Theme System
+
+### Theme Engine (`src/index.css` & `src/lib/AppContext.jsx`)
+The app supports 3 custom color themes:
+- **Pink-Red** (Default: Rose / Fuchsia)
+- **Green** (Emerald / Mint)
+- **Golden** (Amber / Gold)
+
+`AppContext` manages `appTheme` and applies `data-theme="green|golden|pink-red"` to `document.documentElement`. CSS custom properties (`--primary`, `--ring`, `--accent`) dynamically update across light and dark modes.
+
+### Local Storage Entities (`src/api/storageClient.js`)
+- `Goal`: Commitment text, deadline, theme, user_name, sleep_time, wake_time, distracting_apps
+- `Task`: Daily tasks & completion status
+- `FocusSession`: Completed Pomodoro & stopwatch sessions
+- `DayLog`: Daily productivity score & streak tracking
+- `Note`: Quick notes
+- `Reel`: Seeded motivational reel links
+
+---
+
+## 6. How To Change Things Manually
+
+### Change the app name or title
+- Update `<title>` in `index.html` and `name` in `public/manifest.json`.
+
+### Add or edit theme colors
+- Edit the `[data-theme="..."]` CSS variables in `src/index.css`.
 
 ### Add new motivational quotes
+- Edit the `QUOTES` array in `src/lib/quotes.js`.
 
-Edit `src/lib/quotes.js` — it's just an array of `{ text, author }` objects.
+### Change streak labels ("GRIND Day", "On Fire")
+- Edit `levelLabels` in `src/components/StreakCard.jsx`.
 
-### Add a new reel to the default pool
-
-Add it in `MotivationalReel.jsx` where `activeReel` fallback is defined, or add it through the in-app "Reels Pool" manager.
-
----
-
-## 10. Troubleshooting
-
-### "Download server not running"
-- Make sure you ran `npm start` or `node download-server.js` in a terminal
-- The download server must be running on your PC for the auto-download feature to work
-- Once videos are downloaded, the app plays them even without the server
-
-### "Instagram sent empty media response"
-- Instagram requires you to be logged in for some reels
-- yt-dlp uses `--cookies-from-browser chrome` — make sure you're logged into Instagram in Google Chrome on your PC
-- Try opening the reel in Chrome first, then trigger the download
-
-### "invalid source release: 21" (Gradle build error)
-- Already fixed: `compileOptions { sourceCompatibility JavaVersion.VERSION_17 }` is set in `android/app/build.gradle` and `android/build.gradle`
-
-### App doesn't load on phone (Wi-Fi testing)
-- Make sure your phone and PC are on the **same Wi-Fi network**
-- Find your PC's local IP in the Vite terminal output (`Network: http://192.168.x.x:5173`)
-- Check Windows Firewall — allow Node.js through if prompted
-
-### Videos don't play after download
-- Videos are served from `public/videos/` via the Vite dev server
-- The `registry.json` maps URLs to filenames — check `public/videos/registry.json`
-- If a video file is corrupted, delete it from `public/videos/` and re-add the reel URL in the pool
-
-### "yt-dlp not found"
-- Run `pip install yt-dlp` in a terminal
-- Or install manually: download `yt-dlp.exe` from [github.com/yt-dlp/yt-dlp/releases](https://github.com/yt-dlp/yt-dlp/releases) and place it in the project root
+### Change productivity level thresholds
+- Edit `computeLevel()` in `src/lib/dayLog.js`.
 
 ---
 
-## Quick Reference Commands
+## 7. Running the App Locally
 
+### Start both servers
 ```bash
-npm start              # Start everything (recommended)
-npm run dev            # Vite only
-npm run download:server # Download server only
-npm run build          # Build web app for production
-npm run build:android  # Build + sync to Android
-npm run build:aab      # Full release bundle
-npx cap run android    # Install + run on connected phone
-npx cap open android   # Open in Android Studio
+node start.js
 ```
+- Web App: `http://localhost:5173` (or phone WiFi `http://192.168.x.x:5173`)
+- Video Download Server: `http://localhost:3001`
 
 ---
 
-*Built with ❤️ for personal productivity. No data leaves your device.*
+## 8. Play Store Deployment (Step-by-Step)
+
+1. **Deploy frontend to Vercel/Netlify**: `npm run build` → deploy `dist/` over HTTPS.
+2. **Setup PWA Manifest**: Ensure `public/manifest.json` has app name, colors, and 512x512 icons.
+3. **Build TWA Package with Bubblewrap**:
+   ```bash
+   npm install -g @bubblewrap/cli
+   bubblewrap init --manifest https://your-app-domain.vercel.app/manifest.json
+   bubblewrap build
+   ```
+4. **Setup Asset Links**: Place `.well-known/assetlinks.json` containing SHA-256 fingerprint on your domain.
+5. **Upload `.aab` to Google Play Console**: Complete store listing and publish!

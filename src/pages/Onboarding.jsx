@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/lib/AppContext';
+import { useAuth } from '@/lib/AuthContext';
 import {
   Sparkles, ArrowRight, ArrowLeft, Target, Moon, Sun,
   Check, AlertTriangle, Palette,

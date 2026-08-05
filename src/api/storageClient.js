@@ -116,7 +116,7 @@ export const storageClient = {
     Note: createEntityStore(STORAGE_KEYS.NOTES),
     Reel: createEntityStore(STORAGE_KEYS.REELS),
   },
-  getUser: () => getStorage(STORAGE_KEYS.USER, { id: 'local_user', name: 'Champion', email: 'champion@lovemeee.app' }),
+  getUser: () => getStorage(STORAGE_KEYS.USER, null),
   setUser: (user) => setStorage(STORAGE_KEYS.USER, user),
 };
 

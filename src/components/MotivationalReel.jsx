@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Play, Heart, Film, X, Loader, CheckCircle, HardDrive } from 'lucide-react';
+import { Play, Heart, Film, X, Loader, CheckCircle, HardDrive, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getDailyQuote } from '@/lib/quotes';
 import { useApp } from '@/lib/AppContext';
@@ -149,6 +149,31 @@ export default function MotivationalReel() {
     setReelPicked(true);
   }, [reels]);
 
+  // Swipe navigation handlers
+  const handleNextReel = () => {
+    if (!reels?.length) return;
+    setIsPlaying(false);
+    const currIdx = reels.findIndex(r => r.url === activeReel?.url);
+    const nextIdx = (currIdx + 1) % reels.length;
+    setActiveReel(reels[nextIdx]);
+  };
+
+  const handlePrevReel = () => {
+    if (!reels?.length) return;
+    setIsPlaying(false);
+    const currIdx = reels.findIndex(r => r.url === activeReel?.url);
+    const prevIdx = (currIdx - 1 + reels.length) % reels.length;
+    setActiveReel(reels[prevIdx]);
+  };
+
+  const handlePanEnd = (e, info) => {
+    if (info.offset.y < -40 || info.velocity.y < -300) {
+      handleNextReel();
+    } else if (info.offset.y > 40 || info.velocity.y > 300) {
+      handlePrevReel();
+    }
+  };
+
   // Poll server status every 5s to update badges
   useEffect(() => {
     async function checkServer() {
@@ -212,7 +237,10 @@ export default function MotivationalReel() {
   const enrichedActive = activeReel ? enrichReel(activeReel) : null;
 
   return (
-    <div className="relative overflow-hidden rounded-3xl aspect-[4/5] shadow-xl shadow-black/10">
+    <motion.div
+      onPanEnd={handlePanEnd}
+      className="relative overflow-hidden rounded-3xl aspect-[4/5] shadow-xl shadow-black/10 touch-pan-y"
+    >
       <img src={img} alt="Daily motivation" className="absolute inset-0 h-full w-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
 
@@ -248,6 +276,26 @@ export default function MotivationalReel() {
         </div>
       </div>
 
+      {/* Vertical swipe arrows / hints — layered above playing video reels */}
+      {reels?.length > 1 && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-50">
+          <button
+            onClick={handlePrevReel}
+            className="h-8 w-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white/90 hover:text-white active:scale-90 transition-all border border-white/20 shadow-lg"
+            title="Previous reel (Swipe down)"
+          >
+            <ChevronUp className="h-5 w-5" />
+          </button>
+          <button
+            onClick={handleNextReel}
+            className="h-8 w-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white/90 hover:text-white active:scale-90 transition-all border border-white/20 shadow-lg"
+            title="Next reel (Swipe up)"
+          >
+            <ChevronDown className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
       {/* Center play button */}
       {!isPlaying && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
@@ -268,7 +316,7 @@ export default function MotivationalReel() {
               : <Play className="h-7 w-7 fill-white text-white ml-1" />
             }
           </motion.button>
-          <span className="mt-3 text-xs font-bold text-white/90 bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full">
+          <span className="mt-3 text-xs font-bold text-white/90 bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
             {videoSrc
               ? `▶ ${activeReel?.title || 'Play reel'}`
               : activeStatus === 'downloading' ? 'Downloading…'
@@ -276,6 +324,11 @@ export default function MotivationalReel() {
               : 'Reel ready'
             }
           </span>
+          {reels?.length > 1 && (
+            <span className="mt-1.5 text-[10px] font-semibold text-white/60 bg-black/30 backdrop-blur-sm px-2.5 py-0.5 rounded-full">
+              ↕ Swipe up/down for next reel
+            </span>
+          )}
         </div>
       )}
 
@@ -286,6 +339,6 @@ export default function MotivationalReel() {
           <p className="mt-1 text-sm font-medium text-white/70">— {quote.author}</p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

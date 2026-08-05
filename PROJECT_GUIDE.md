@@ -258,16 +258,123 @@ node start.js
 
 ***
 
-## 8. Play Store Deployment (Step-by-Step)
+## 8. Extended Play Store Deployment Guide (Custom Domain: `biprashpandey.com.np/apps/lovemeee/`)
 
-1. **Deploy frontend to Vercel/Netlify**: `npm run build` → deploy `dist/` over HTTPS.
-2. **Setup PWA Manifest**: Ensure `public/manifest.json` has app name, colors, and 512x512 icons.
-3. **Build TWA Package with Bubblewrap**:
+This step-by-step guide explains how to convert the **LOVE MEEE** Web PWA into a native Android app (`.aab` / `.apk`) using a **Trusted Web Activity (TWA)** and publish it to the Google Play Store using your domain `https://biprashpandey.com.np/apps/lovemeee/`.
 
+---
+
+### Step 1: Prepare the Web App Build for Base Subpath
+Since the app will be hosted at `https://biprashpandey.com.np/apps/lovemeee/` (a subfolder path):
+1. In `vite.config.js`, set `base: '/apps/lovemeee/'`.
+2. Build the production bundle:
    ```bash
-   npm install -g @bubblewrap/cli
-   bubblewrap init --manifest https://biprashpandey.com.np/apps/lovemeee/manifest.json
-   bubblewrap build
+   npm run build
    ```
-4. **Setup Asset Links**: Place `.well-known/assetlinks.json` containing SHA-256 fingerprint on your domain.
-5. **Upload** **`.aab`** **to Google Play Console**: Complete store listing and publish!
+3. Upload the contents of the `dist/` directory to your web server under `/apps/lovemeee/`. Verify that opening `https://biprashpandey.com.np/apps/lovemeee/` in Chrome loads the app cleanly.
+
+---
+
+### Step 2: Verify `manifest.json` and Icons
+Ensure `public/manifest.json` is deployed and accessible at `https://biprashpandey.com.np/apps/lovemeee/manifest.json`:
+```json
+{
+  "name": "LOVE MEEE",
+  "short_name": "LOVE MEEE",
+  "start_url": "/apps/lovemeee/",
+  "scope": "/apps/lovemeee/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#a855f7",
+  "icons": [
+    {
+      "src": "/apps/lovemeee/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/apps/lovemeee/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
+```
+
+---
+
+### Step 3: Initialize Android TWA with Bubblewrap CLI
+Install the official Google Bubblewrap CLI and initialize the project:
+```bash
+# 1. Install CLI
+npm install -g @bubblewrap/cli
+
+# 2. Create build workspace directory
+mkdir lovemeee-twa && cd lovemeee-twa
+
+# 3. Initialize from your live manifest URL
+bubblewrap init --manifest https://biprashpandey.com.np/apps/lovemeee/manifest.json
+```
+
+Bubblewrap will prompt you with questions. Provide these exact values:
+- **Application name**: `LOVE MEEE`
+- **Short name**: `LOVE MEEE`
+- **Application ID (Package Name)**: `np.com.biprashpandey.lovemeee`
+- **Start URL**: `https://biprashpandey.com.np/apps/lovemeee/`
+- **Display mode**: `standalone`
+- **Keystore location**: `android.keystore` (Create a new keystore and record your password safely!)
+
+---
+
+### Step 4: Build the Android App Bundle (`.aab`)
+Run the build command inside the `lovemeee-twa` directory:
+```bash
+bubblewrap build
+```
+This generates two key files:
+- `app-release-bundle.aab` (Upload to Google Play Console)
+- `app-release-signed.apk` (For manual testing on your device)
+
+---
+
+### Step 5: Extract SHA-256 Fingerprint for Digital Asset Links
+To remove the URL address bar in the TWA app, Google requires digital verification via `assetlinks.json`:
+
+1. Run `keytool` to extract your SHA-256 fingerprint:
+   ```bash
+   keytool -list -v -keystore android.keystore -alias androiddb -storepass YOUR_KEYSTORE_PASSWORD
+   ```
+2. Look for the line starting with `SHA256:` (e.g. `12:34:56:78:9A:...`).
+
+---
+
+### Step 6: Deploy `.well-known/assetlinks.json` to Server
+Create a file at `https://biprashpandey.com.np/.well-known/assetlinks.json` with the following content:
+```json
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "np.com.biprashpandey.lovemeee",
+      "sha256_cert_fingerprints": [
+        "YOUR_SHA256_FINGERPRINT_HERE"
+      ]
+    }
+  }
+]
+```
+Ensure header `Content-Type: application/json` is served.
+
+---
+
+### Step 7: Submit to Google Play Console
+1. Log in to [Google Play Console](https://play.google.com/console).
+2. Click **Create app** → Name: **LOVE MEEE**, Default language: **English**, Type: **App**, Free.
+3. Navigate to **Testing** → **Internal testing** → **Create new release**.
+4. Upload your `app-release-bundle.aab` file.
+5. Complete the **Main store listing** (Short description, Full description, Screenshots, App Icon 512x512, Feature Graphic 1024x500).
+6. Complete the **Content rating** questionnaire and **App privacy policy** link (`https://biprashpandey.com.np/apps/lovemeee/`).
+7. Save and roll out to Internal Testing → Promote to Production!
+

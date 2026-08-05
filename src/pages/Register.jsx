@@ -1,24 +1,24 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserPlus, Mail, Lock, Loader2 } from "lucide-react";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { safeReturnTo } from "@/lib/authReturnTo";
 
 export default function Register() {
+  const navigate = useNavigate();
+  const { login, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showOtp, setShowOtp] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
+  const returnTo = safeReturnTo();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,13 +29,20 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await base44.auth.register({ email, password });
-      setShowOtp(true);
+      login(email, password);
+      toast.success("Account created successfully! Welcome to LOVE MEEE 🎉");
+      navigate(returnTo && returnTo !== '/register' ? returnTo : '/');
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogle = () => {
+    loginWithGoogle();
+    toast.success("Signed in with Google! Welcome to LOVE MEEE 🎉");
+    navigate(returnTo && returnTo !== '/register' ? returnTo : '/');
   };
 
   const handleVerify = async () => {
@@ -65,10 +72,6 @@ export default function Register() {
     } catch (err) {
       setError(err.message || "Failed to resend code");
     }
-  };
-
-  const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", safeReturnTo());
   };
 
   if (showOtp) {

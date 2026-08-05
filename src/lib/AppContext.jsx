@@ -269,12 +269,14 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const deleteTask = async (taskId) => {
+  const deleteTask = async (taskOrId) => {
     try {
-      await storageClient.entities.Task.delete(taskId);
-      setTasks(prev => prev.filter(t => t.id !== taskId));
+      const targetId = typeof taskOrId === 'object' ? taskOrId.id : taskOrId;
+      await storageClient.entities.Task.delete(targetId);
+      setTasks(prev => prev.filter(t => t.id !== targetId));
       toast.info('Task deleted');
     } catch (e) {
+      console.error('Failed to delete task:', e);
       toast.error('Failed to delete task');
     }
   };

@@ -106,18 +106,20 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }) {
       )}
 
       {!isEditing && (
-        <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setIsEditing(true)}
-            className="text-muted-foreground hover:text-primary p-1 active:scale-90"
+            className="text-muted-foreground hover:text-primary p-1.5 rounded-lg active:scale-90 transition-colors"
+            title="Edit task"
           >
-            <Edit2 className="h-3.5 w-3.5" />
+            <Edit2 className="h-4 w-4" />
           </button>
           <button
-            onClick={() => onDelete(task)}
-            className="text-muted-foreground hover:text-destructive p-1 active:scale-90"
+            onClick={() => onDelete(task.id)}
+            className="text-muted-foreground hover:text-destructive p-1.5 rounded-lg active:scale-90 transition-colors"
+            title="Delete task"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       )}

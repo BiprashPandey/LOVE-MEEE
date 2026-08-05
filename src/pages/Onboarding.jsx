@@ -418,10 +418,11 @@ function SleepStep({ sleepTime, setSleepTime, wakeTime, setWakeTime, onFinish, o
 // ── Main Onboarding ────────────────────────────────────────────────────────
 export default function Onboarding() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { saveGoal, changeTheme, appTheme } = useApp();
 
   const [step, setStep] = useState(0);
-  const [name, setName] = useState('');
+  const [name, setName] = useState(() => user?.name || '');
   const [selectedTheme, setSelectedTheme] = useState(appTheme || 'pink-red');
   const [goalText, setGoalText] = useState('');
   const [deadline, setDeadline] = useState('');

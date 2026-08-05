@@ -19,12 +19,17 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoadingAuth(true);
       const localUser = storageClient.getUser();
-      setUser(localUser || { id: 'local_user', name: 'Champion', email: 'champion@lovemeee.app' });
-      setIsAuthenticated(true);
+      if (localUser && localUser.email) {
+        setUser(localUser);
+        setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
     } catch (error) {
       console.error('User auth check error:', error);
-      setUser({ id: 'local_user', name: 'Champion', email: 'champion@lovemeee.app' });
-      setIsAuthenticated(true);
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setIsLoadingAuth(false);
       setAuthChecked(true);
@@ -34,13 +39,27 @@ export const AuthProvider = ({ children }) => {
   const login = (email, password) => {
     const newUser = {
       id: 'usr_' + Date.now(),
-      name: email.split('@')[0] || 'User',
-      email: email,
+      name: email ? email.split('@')[0] : 'User',
+      email: email || 'user@lovemeee.app',
+      provider: 'email',
     };
     storageClient.setUser(newUser);
     setUser(newUser);
     setIsAuthenticated(true);
     return newUser;
+  };
+
+  const loginWithGoogle = (email = 'biprashpandey@gmail.com', name = 'Biprash Pandey') => {
+    const googleUser = {
+      id: 'goog_' + Date.now(),
+      name: name || email.split('@')[0],
+      email: email,
+      provider: 'google',
+    };
+    storageClient.setUser(googleUser);
+    setUser(googleUser);
+    setIsAuthenticated(true);
+    return googleUser;
   };
 
   const logout = () => {
@@ -63,6 +82,7 @@ export const AuthProvider = ({ children }) => {
       authError,
       authChecked,
       login,
+      loginWithGoogle,
       logout,
       navigateToLogin,
       checkUserAuth
